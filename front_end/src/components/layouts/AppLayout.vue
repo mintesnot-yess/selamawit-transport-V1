@@ -23,4 +23,5 @@
 import { AppSidebar } from "@/components/navigation";
 import { NotificationsPanel } from "@/components/panels";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui";
+import ScrollArea from "../ui/scroll-area/ScrollArea.vue";
 </script>

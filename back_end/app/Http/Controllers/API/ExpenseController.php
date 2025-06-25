@@ -139,7 +139,7 @@ class ExpenseController extends Controller
 
         $expense = Expense::create([
             "expense_type_id" =>
-                $request->expense_type ??
+                $request->expense_types ??
                 ($request->General_category ??
                     ($request->employees_category ??
                         $request->vehicle_category)),
@@ -207,17 +207,17 @@ class ExpenseController extends Controller
         // Set from_bank and to_bank fields, retain existing if not provided
         $validated["from_bank"] =
             $request->has("selectedBank") && $request->selectedBank !== null
-                ? $request->selectedBank
-                : $expense->from_bank;
+            ? $request->selectedBank
+            : $expense->from_bank;
         $validated["from_account"] =
             $request->has("selectedAccount") &&
             $request->selectedAccount !== null
-                ? $request->selectedAccount
-                : $expense->from_account;
+            ? $request->selectedAccount
+            : $expense->from_account;
         $validated["to_bank"] =
             $request->has("toBank") && $request->toBank !== null
-                ? $request->toBank
-                : $expense->to_bank;
+            ? $request->toBank
+            : $expense->to_bank;
 
         // Handle file upload if present
         if ($request->hasFile("file")) {

@@ -406,6 +406,7 @@ import { h, ref, shallowRef } from "vue";
 import useOrderStore from "@/stores/orders";
 import router from "@/router";
 import ConfirmDelete from "@/components/form/ConfirmDelete.vue";
+import { RouterLink } from "vue-router";
 
 export default {
   components: {
@@ -651,8 +652,19 @@ export default {
               () => ["Order Name", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
             );
           },
-          cell: ({ row }) =>
-            h("div", { class: "lowercase" }, "#order " + row.getValue("id")),
+          cell: ({ row }) => {
+            const orderId = row.getValue("id");
+
+            return h(
+              RouterLink, // Use RouterLink component
+              {
+                class:
+                  "text-blue-600 hover:text-blue-800 hover:underline lowercase",
+                to: `/order/detail/${orderId}`,
+              },
+              `#order ${orderId}`
+            );
+          },
         },
 
         {

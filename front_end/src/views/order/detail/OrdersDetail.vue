@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col space-y-6">
+  <div class="flex flex-col space-y-3">
     <GoBack />
-    <div class="flex items-start justify-between px-2">
+    <div class="flex items-start justify-between px-1">
       <div>
         <div class="flex items-center space-x-5 font-normal text-2xl">
           <h4>Order Details</h4>
@@ -16,7 +16,7 @@
       class="grid items-start flex-1 gap-4 md:gap-8 lg:grid-cols-3 xl:grid-cols-3"
     >
       <OrderCard :order="orders" @delete="handleDeleteOrder" />
-      <div class="grid items-start gap-2 auto-rows-max md:gap-4 lg:col-span-2">
+      <div class="grid items-start gap-1 auto-rows-max md:gap-4 lg:col-span-2">
         <Tabs default-value="expense">
           <div class="flex items-center">
             <TabsList>
