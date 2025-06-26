@@ -673,9 +673,9 @@ export default {
         expense_category: expense.expense_type.category,
         General_category:
           category === "General" ? expense.expense_type.id : null,
-        vehicle_id: expense.vehicle_id,
+        // vehicle_id: expense.vehicle_id ?? expense.vehicle_id,
         vehicle_category: category === "Vehicle" ? category : null,
-        employee_id: expense.employee_id,
+        employee_id: category === "Employee" ? expense.employee_id : "",
         employees_category: category === "Employee" ? category : null,
 
         selectedBank: expense.from_bank.id,

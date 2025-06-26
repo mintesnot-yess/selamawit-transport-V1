@@ -202,7 +202,7 @@ class ExpenseController extends Controller
         // Set expense_type_id based on which category is provided
         $validated["expense_type_id"] =
             $request->General_category ??
-            ($request->employees_category ?? $request->vehicle_category);
+            ($request->employees_category ?? $request->vehicle_category ?? $request->expense_types);
 
         // Set from_bank and to_bank fields, retain existing if not provided
         $validated["from_bank"] =

@@ -16,7 +16,9 @@
       class="grid items-start flex-1 gap-4 md:gap-8 lg:grid-cols-3 xl:grid-cols-3"
     >
       <OrderCard :order="orders" @delete="handleDeleteOrder" />
-      <div class="grid items-start gap-1 auto-rows-max md:gap-4 lg:col-span-2">
+      <div
+        class="grid items-start gap-1 auto-rows-max md:gap-4 lg:col-span-2 overflow-x-auto"
+      >
         <Tabs default-value="expense">
           <div class="flex items-center">
             <TabsList>
@@ -28,10 +30,13 @@
           </div>
 
           <TabsContent value="expense">
-            <Expense :expenseData="expenses" />
+            <Expense :expenseData="expenses" @data-changed="fetchOrder" />
           </TabsContent>
           <TabsContent value="payment_collected">
-            <Expense :expenseData="expenses" />
+            <PaymentCollected
+              :expenseData="incomes"
+              @data-changed="fetchOrder"
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -71,8 +76,9 @@ import CardDescription from "@/components/ui/card/CardDescription.vue";
 import CardContent from "@/components/ui/card/CardContent.vue";
 import Label from "@/components/ui/label/Label.vue";
 import CardFooter from "@/components/ui/card/CardFooter.vue";
-import Expense from "./Expenses.vue";
 import useOrderStore from "@/stores/orders";
+import Expense from "./Expenses.vue";
+import PaymentCollected from "./PaymentCollected.vue";
 
 export default {
   components: {
@@ -105,6 +111,7 @@ export default {
     Label,
     CardFooter,
     Expense,
+    PaymentCollected,
   },
   data() {
     return {
@@ -155,13 +162,12 @@ export default {
       this.loading = true;
       try {
         const id = this.$route.params.id;
-
         const response = await useOrderStore.getById(id);
-
-        this.orders = response.order;
         this.expenses = response.expenses;
 
-        this.incomes = response.order.income;
+        this.orders = response.order;
+
+        this.incomes = response.income;
         this.expense_types = response.expense_type;
         this.banks = response.bank;
         this.bank_accounts = response.bank_account;

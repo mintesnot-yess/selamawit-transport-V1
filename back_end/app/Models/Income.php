@@ -36,6 +36,10 @@ class Income extends Model
     {
         return $this->belongsTo(Bank::class);
     }
+    public function bank_account()
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 
     // Relationship with creator
     public function creator()

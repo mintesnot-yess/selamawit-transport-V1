@@ -144,7 +144,10 @@ class OrderController extends Controller
         ])
             ->where("order_id", $id)
             ->get();
-        $income = Income::with(["bank"])->find($id);
+
+
+        $income = Income::with(["bank"])->where("order_id", $id)
+            ->get();
 
         $bank = Bank::all();
         $bank_account = BankAccount::all();

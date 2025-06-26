@@ -3,7 +3,7 @@
     <Card>
       <CardHeader class="px-2">
         <CardTitle class="flex justify-between"
-          >Expense
+          >Payment Collected
           <Button
             @click="togglePanel"
             variant="ghost"
@@ -37,14 +37,14 @@
     <ConfirmDelete
       v-model:open="showDeleteDialog"
       :title="deleteTitle"
-      description="Are you sure you want to delete this expense? This action cannot be undone."
-      confirm-label="Delete Expense"
+      description="Are you sure you want to delete this income data? This action cannot be undone."
+      confirm-label="Delete Income"
       @confirm="handleDelete"
     />
     <Panel
       v-model="showPanel"
-      title="Create A Expense"
-      description="Fill the Expense Information"
+      title="Payment Collected"
+      description="Fill the Payment Collected Information"
     >
       <form
         @submit.prevent="handleSubmit"
@@ -60,8 +60,6 @@
               <input
                 id="order"
                 type="text"
-                step="0.01"
-                min="0"
                 disabled
                 class="w-full rounded-sm border border-gray-300/80 px-4 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/90 focus:border-blue-500/50 transition-all duration-200 bg-white/95 shadow-sm"
                 :placeholder="'ORDER #' + orderIds"
@@ -71,42 +69,16 @@
           </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Expense Type
-          </label>
-          <div class="relative">
-            <select
-              v-model="form.expense_types"
-              class="w-full appearance-none rounded-lg border border-gray-300 px-4 py-2 pr-10 text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            >
-              <option value="" disabled>Select expense</option>
-              <option
-                v-for="expenseType in AllExpenseTypes"
-                :key="expenseType.id"
-                :value="expenseType.id"
-              >
-                {{ expenseType.name }}
-              </option>
-            </select>
-            <div
-              class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
-            >
-              <ChevronDown class="h-4 w-4" />
-            </div>
-          </div>
-        </div>
-
         <div class="max-w-3xl mx-auto">
           <!-- Bank Selection Section -->
           <div class="rounded-sm space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2"
-                >From Bank
+                >Bank
               </label>
               <div class="relative">
                 <select
-                  v-model="form.selectedBank"
+                  v-model="form.bank_id"
                   @change="filterBankAccounts"
                   class="w-full appearance-none rounded-lg border border-gray-300 px-4 py-2 pr-10 text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 >
@@ -130,11 +102,11 @@
             <!-- Bank Account Selection -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2"
-                >From Account
+                >Account
               </label>
               <div class="relative">
                 <select
-                  v-model="form.selectedAccount"
+                  v-model="form.account_number"
                   class="w-full appearance-none rounded-lg border border-gray-300 px-4 py-2 pr-10 text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                   :disabled="!filteredAccounts.length"
                 >
@@ -142,10 +114,10 @@
                   <option
                     v-for="account in filteredAccounts"
                     :key="account.id"
-                    :value="account.id"
+                    :value="account.account_number"
                   >
                     {{ account.account_number }}
-                    -
+
                     {{ account.account_name }}
                     <template v-if="!form.selectedBank">
                       ({{ getBankName(account.bank_id) }})
@@ -165,43 +137,29 @@
                 No accounts available for selected bank
               </p>
             </div>
+          </div>
+        </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >To Bank
-              </label>
-              <div class="relative">
-                <select
-                  v-model="form.toBank"
-                  class="w-full appearance-none rounded-lg border border-gray-300 px-4 py-2 pr-10 text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                >
-                  <option value="" disabled>Select bank</option>
-                  <option
-                    v-for="bank in AllBanks"
-                    :key="bank.id"
-                    :value="bank.id"
-                  >
-                    {{ bank.name }}
-                  </option>
-                </select>
-                <div
-                  class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
-                >
-                  <ChevronDown class="h-4 w-4" />
-                </div>
+        <div class="rounded-sm space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Payment Type
+            </label>
+            <div class="relative">
+              <select
+                v-model="form.payment_type"
+                class="w-full appearance-none rounded-lg border border-gray-300 px-4 py-2 pr-10 text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+              >
+                <option value="">Select Payment Type</option>
+                <option value="Cash">Cash</option>
+                <option value="Transfer">Transfer</option>
+                <option value="Check">Check</option>
+              </select>
+              <div
+                class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
+              >
+                <ChevronDown class="h-4 w-4" />
               </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >To Account
-              </label>
-              <input
-                v-model="form.toAccount"
-                id="owner_name"
-                type="text"
-                class="w-full rounded-sm border border-gray-300/80 px-4 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/90 focus:border-blue-500/50 transition-all duration-200 bg-white/95 shadow-sm"
-                placeholder="Enter account number"
-              />
             </div>
           </div>
         </div>
@@ -237,7 +195,7 @@
               Date
             </label>
             <input
-              v-model="form.paid_date"
+              v-model="form.received_date"
               id="date"
               type="date"
               class="w-full rounded-sm border border-gray-300/80 px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/90 focus:border-blue-500/50 transition-all duration-200 bg-white/95 shadow-sm"
@@ -265,7 +223,7 @@
               id="file_input"
               type="file"
               class="sr-only"
-              @change="form.file = $event.target.files[0]"
+              @change="form.attachment = $event.target.files[0]"
             />
             <label
               for="file_input"
@@ -274,14 +232,15 @@
               <Upload class="mr-2 h-4 w-4" />
               <span>
                 {{
-                  form.file && form.file.name
-                    ? form.file.name
+                  form.attachment && form.attachment.name
+                    ? form.attachment.name
                     : "Choose file..."
                 }}
               </span>
             </label>
           </div>
         </div>
+
         <div v-if="error" class="text-red-500 text-sm text-center">
           {{ error }}
         </div>
@@ -335,6 +294,7 @@ import SelectValue from "@/components/ui/select/SelectValue.vue";
 import router from "@/router";
 import useExpenseStore from "@/stores/expenses";
 import useExpenseTypeStore from "@/stores/expenseTypes";
+import useIncomeStore from "@/stores/income";
 import {
   ChevronDown,
   CirclePlus,
@@ -395,16 +355,14 @@ export default {
       ExpenseColumns: [],
 
       form: {
-        expense_types: "",
-        order_id: "",
-        selectedBank: "",
-        selectedAccount: "",
-        toAccount: "",
-        toBank: "",
         amount: "",
-        paid_date: "",
+        received_date: "",
+        bank_id: "",
+        account_number: "",
+        attachment: "",
+        payment_type: "",
         remark: "",
-        file: "",
+        order_id: "",
       },
 
       // updated component
@@ -426,10 +384,10 @@ export default {
       const expenseType = await useExpenseTypeStore.getAll();
       const response = await useExpenseStore.getAll();
       this.expenses = response.data || [];
-
       this.AllBanks = response.AllBanks;
       this.AllBankAccounts = response.AllBanksAccount;
       this.AllExpenseTypes = expenseType.data;
+      console.log(this.expenseData);
       const orderId = this.$route.params.id;
       this.orderIds = orderId;
     },
@@ -447,7 +405,7 @@ export default {
 
       this.form.order_id = orderId;
       try {
-        const response = await useExpenseStore.store(this.form);
+        const response = await useIncomeStore.store(this.form);
         this.$emit("data-changed");
 
         this.showPanel = false;
@@ -461,21 +419,18 @@ export default {
         this.loading = false;
       }
     },
-    editExpense(expense) {
+    editExpense(income) {
       this.isUpdate = true;
-      this.editId = expense.id;
-      const { category } = expense.expense_type;
+      this.editId = income.id;
       this.form = {
-        expense_types: expense.expense_type.id,
-        order_id: expense.order_id,
-        selectedBank: expense.from_bank.id,
-        selectedAccount: expense.from_account.id,
-        toAccount: expense.to_account,
-        toBank: expense.to_bank.id,
-        amount: expense.amount,
-        paid_date: expense.paid_date,
-        remark: expense.remark,
-        file: expense.file,
+        order_id: income.order_id,
+        amount: income.amount,
+        received_date: income.received_date,
+        bank_id: income.bank_id,
+        account_number: income.account_number,
+        payment_type: income.payment_type,
+        remark: income.remark,
+        attachment: income.attachment,
       };
       this.showPanel = true;
     },
@@ -483,7 +438,7 @@ export default {
     async handleSubmitUpdate() {
       try {
         this.loading = true;
-        const response = await useExpenseStore.update(this.editId, this.form);
+        const response = await useIncomeStore.update(this.editId, this.form);
 
         this.showPanel = false;
         this.$emit("data-changed");
@@ -496,9 +451,9 @@ export default {
         this.loading = false;
       }
     },
-    confirmDelete(expense) {
-      this.deleteTitle = `Delete ${expense.name}`;
-      this.deleteId = expense.id;
+    confirmDelete(Income) {
+      this.deleteTitle = `Delete ${Income.id}`;
+      this.deleteId = Income.id;
       this.showDeleteDialog = true;
     },
     async handleDelete() {
@@ -506,7 +461,7 @@ export default {
         const orderId = this.$route.params.id;
 
         this.loading = true;
-        await useExpenseStore.delete(this.deleteId);
+        await useIncomeStore.delete(this.deleteId);
         this.$emit("data-changed");
       } catch (error) {
         this.error = error.message || "Failed to delete expense";
@@ -554,14 +509,14 @@ export default {
         },
 
         {
-          accessorKey: "type",
-          header: "Type",
+          accessorKey: "bank",
+          header: "Bank",
           cell: ({ row }) => {
-            const expenseType = row.original.expense_type; // Access the nested vehicle object
+            const Income = row.original; // Access the nested vehicle object
             return h(
               "div",
               { class: "text-sm" },
-              expenseType ? expenseType.category + " | " + expenseType.name : ""
+              Income ? Income.bank.name + " | " + Income.account_number : ""
             );
           },
         },
@@ -580,40 +535,19 @@ export default {
           },
         },
         {
-          accessorKey: "from",
-          header: "From",
+          accessorKey: "type",
+          header: "Payment Type",
           cell: ({ row }) => {
-            const expense_bank = row.original.from_bank; // Access the nested client object
-            const expense_account = row.original.from_account; // Access the nested client object
-            return h(
-              "div",
-              { class: "text-sm" },
-              expense_bank
-                ? expense_bank.name + " | " + expense_account.account_number
-                : ""
-            );
+            const paymentType = row.original.payment_type; // Access the nested client object
+            return h("div", { class: "text-sm" }, paymentType);
           },
         },
 
         {
-          accessorKey: "to_account",
-          header: "To",
+          accessorKey: "received_date",
+          header: "Received Date",
           cell: ({ row }) => {
-            const expense_bank = row.original.to_bank; // Access the nested client object
-            const paid_date = row.getValue("to_account"); //
-
-            return h(
-              "div",
-              { class: "text-sm" },
-              expense_bank ? expense_bank.name + " | " + paid_date : ""
-            );
-          },
-        },
-        {
-          accessorKey: "paid_date",
-          header: "Date",
-          cell: ({ row }) => {
-            const paid_date = row.getValue("paid_date"); //
+            const paid_date = row.original.received_date; //
             //
             const formattedDate = new Date(paid_date).toLocaleDateString(
               "en-US",
@@ -625,6 +559,17 @@ export default {
             );
             //  Access the nested vehicle object
             return h("div", { class: "text-sm" }, formattedDate);
+          },
+        },
+        {
+          accessorKey: "remark",
+          header: "Remark",
+          cell: ({ row }) => {
+            const remark = row.original.remark; //
+            //
+
+            //  Access the nested vehicle object
+            return h("div", { class: "text-sm" }, remark);
           },
         },
 
@@ -653,14 +598,14 @@ export default {
       ];
     },
     filterBankAccounts() {
-      if (!this.form.selectedBank) {
+      if (!this.form.bank_id) {
         this.filteredAccounts = [...this.AllBankAccounts];
       } else {
         this.filteredAccounts = this.AllBankAccounts.filter(
-          (account) => account.bank_id === this.form.selectedBank
+          (account) => account.bank_id === this.form.bank_id
         );
       }
-      this.form.selectedAccount = "";
+      this.form.account_number = "";
     },
 
     getBankName(bankId) {

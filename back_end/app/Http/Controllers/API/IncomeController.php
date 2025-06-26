@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Income;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +31,7 @@ class IncomeController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $request->validate(rules: [
             "order_id" => "required|exists:orders,id",
             "amount" => "required|numeric|min:0",
             "received_date" => "required|date",
@@ -46,19 +47,25 @@ class IncomeController extends Controller
         if ($request->hasFile('attachment')) {
             $filePath = $request->file('attachment')->store('attachments/incomes', 'public');
         }
+        // account_number
+
+        $order_id = $request->order_id;
+        Order::where('id', $order_id)->update(['payment_collected' => 1]);
+
 
         $income = Income::create([
-            "order_id" => $data['order_id'],
-            "amount" => $data['amount'],
-            "received_date" => $data['received_date'],
-            "bank_id" => $data['bank_id'],
-            "account_number" => $data['account_number'],
-            "payment_type" => $data['payment_type'] ?? null,
-            "remark" => $data['remark'] ?? null,
+            "order_id" => $request->order_id,
+            "amount" => $request->amount,
+            "received_date" => $request->received_date,
+            "bank_id" => $request->bank_id,
+            "account_number" => $request->account_number,
+            "payment_type" => $request->payment_type ?? null,
+            "remark" => $request->remark ?? null,
             "attachment" => $filePath,
             "created_by" => Auth::id(),
             "updated_by" => Auth::id(),
         ]);
+
 
         return response()->json([
             "success" => true,
@@ -72,7 +79,7 @@ class IncomeController extends Controller
      */
     public function show($id)
     {
-        $income = Income::with(["order", "creator", "updater"])->find($id);
+        $income = Income::with(relations: ["order", "bank"])->find($id);
 
         if (!$income) {
             return response()->json([
@@ -103,26 +110,18 @@ class IncomeController extends Controller
             ], 404);
         }
 
-        $validator = Validator::make($request->all(), [
+        $data = $request->validate(rules: [
             "order_id" => "sometimes|exists:orders,id",
             "amount" => "sometimes|numeric|min:0",
             "received_date" => "sometimes|date",
             "remark" => "nullable|string",
-            "attachment" => "nullable|file|mimes:jpg,jpeg,pdf,png|max:2048",
+            "attachment" => "nullable",
             "bank_id" => "nullable|exists:banks,id",
             "account_number" => "nullable|string",
-            "payment_type" => "nullable|string|in:cash,credit_card,bank_transfer,other",
+            "payment_type" => "nullable|string",
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                "success" => false,
-                "message" => "Validation errors",
-                "errors" => $validator->errors()
-            ], 422);
-        }
 
-        $data = $validator->validated();
 
         // Handle file upload
         if ($request->hasFile('attachment')) {
@@ -136,7 +135,7 @@ class IncomeController extends Controller
         }
 
         try {
-            $income->update($data);
+            $income->update(attributes: $data);
 
             return response()->json([
                 "success" => true,

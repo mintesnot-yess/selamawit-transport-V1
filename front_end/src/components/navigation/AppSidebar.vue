@@ -120,7 +120,7 @@ const data = {
     },
     {
       name: "Bank",
-      url: "banks",
+      url: "/banks",
       icon: Landmark,
       permission: "read-orders",
     },
