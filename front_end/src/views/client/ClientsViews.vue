@@ -9,7 +9,7 @@
       </div>
       <div class="flex items-center gap-2">
         <Button
-          @click="showPanel = true"
+          @click="togglePanel()"
           variant="ghost"
           class="text-sm text-muted-foreground flex gap-1 items-center justify-center cursor-pointer"
         >
@@ -25,88 +25,75 @@
         :data="Clients"
         :isPagination="true"
         :isSearchable="true"
-        :is-filter-select="true"
-        filter-select-column="status"
-        filter-select-label="Status"
-        :filter-select-options="[
-          { label: 'All', value: '__all' },
-          { label: 'PENDING', value: 'PENDING' },
-          { label: 'IN_PROGRESS', value: 'IN_PROGRESS' },
-          { label: 'COMPLETED', value: 'COMPLETED' },
-          { label: 'CANCELLED', value: 'CANCELLED' },
-        ]"
+        :is-filter-select="false"
       />
     </div>
-
+    <ConfirmDelete
+      v-model:open="showDeleteDialog"
+      :title="deleteTitle"
+      description="Are you sure you want to delete this Client? This action cannot be undone."
+      confirm-label="Delete Client"
+      @confirm="handleDelete"
+    />
     <Panel
       v-model="showPanel"
-      title="Create A Client"
+      :title="isUpdate ? 'Update Load Client' : 'Create A Client'"
       description="Fill the Client Information"
     >
-      <form @submit.prevent="handleSubmitAdd" class="flex flex-col h-full">
+      <form @submit.prevent="handleSubmit" class="flex flex-col h-full">
         <div class="flex-1 space-y-2">
-          <FormField v-slot="{ componentField }" name="name">
+          <FormField name="name">
             <FormItem>
               <FormLabel>Client Name</FormLabel>
               <FormControl>
-                <Input
-                  v-model="form.name"
-                  type="text"
-                  v-bind="componentField"
-                />
+                <Input v-model="form.name" type="text" />
               </FormControl>
               <FormMessage />
             </FormItem>
           </FormField>
 
-          <FormField v-slot="{ componentField }" name="contact_person">
+          <FormField name="contact_person">
             <FormItem>
               <FormLabel>Contact Person</FormLabel>
               <FormControl>
-                <Input
-                  v-model="form.contact_person"
-                  type="text"
-                  v-bind="componentField"
-                />
+                <Input v-model="form.contact_person" type="text" />
               </FormControl>
               <FormMessage />
             </FormItem>
           </FormField>
-          <FormField v-slot="{ componentField }" name="phone">
+          <FormField name="phone">
             <FormItem>
               <FormLabel>Phone</FormLabel>
               <FormControl>
-                <Input
-                  v-model="form.phone"
-                  type="text"
-                  v-bind="componentField"
-                />
+                <Input v-model="form.phone" type="text" />
               </FormControl>
               <FormMessage />
             </FormItem>
           </FormField>
 
-          <FormField v-slot="{ componentField }" name="address">
+          <FormField name="address">
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input
-                  v-model="form.address"
-                  type="text"
-                  v-bind="componentField"
-                />
+                <Input v-model="form.address" type="text" />
               </FormControl>
               <FormMessage />
             </FormItem>
           </FormField>
         </div>
-        <Button type="submit">
-          <span v-if="loading">
-            <LoaderCircle
-              class="fa-solid size-6 fa-circle-notch animate-spin"
-            />
+
+        <div v-if="error" class="text-red-500 text-sm text-center mt-2">
+          {{ error }}
+        </div>
+        <Button
+          type="submit"
+          class="mt-2 w-full text-white font-semibold py-2 rounded-md transition-colors duration-200"
+        >
+          <span v-if="loading" class="flex items-center justify-center">
+            <LoaderCircle class="animate-spin mr-2 size-5" />
+            Loading...
           </span>
-          <span v-else> Submit </span>
+          <span v-else> {{ isUpdate ? "Edit" : "Submit" }} </span>
         </Button>
       </form>
     </Panel>
@@ -130,6 +117,7 @@ import {
 import { Table, DropdownAction } from "@/components/table";
 import { h, ref, shallowRef } from "vue";
 import useClientStore from "@/stores/clients";
+import ConfirmDelete from "@/components/form/ConfirmDelete.vue";
 
 export default {
   components: {
@@ -147,23 +135,28 @@ export default {
     Checkbox,
     ArrowUpDown,
     CirclePlus,
+    ConfirmDelete,
   },
   data() {
     return {
       form: {
         name: "",
         address: "",
-
         contact_person: "",
         phone: "",
-        active: true,
-        isMenuOpen: false,
       },
-      showPanel: false,
-      loading: false,
       error: "",
       Clients: [],
       columns: [],
+      showPanel: false,
+      loading: false,
+      // updated component
+      isUpdate: false,
+      editId: null,
+      // deleted component
+      showDeleteDialog: false,
+      deleteTitle: "",
+      deleteId: null,
     };
   },
   created() {
@@ -178,6 +171,13 @@ export default {
         console.table(this.Clients);
       } catch (error) {
         console.error("Failed to fetch users:", error);
+      }
+    },
+    handleSubmit() {
+      if (this.isUpdate) {
+        this.handleSubmitUpdate();
+      } else {
+        this.handleSubmitAdd();
       }
     },
     async handleSubmitAdd() {
@@ -202,7 +202,71 @@ export default {
         this.loading = false;
       }
     },
+    editClient(client) {
+      this.isUpdate = true;
+      this.editId = client.id;
+      this.form = {
+        name: client.name,
+        address: client.address,
+        contact_person: client.contact_person,
+        phone: client.phone,
+      };
+      this.showPanel = true;
+    },
 
+    async handleSubmitUpdate() {
+      try {
+        this.loading = true;
+        const response = await useClientStore.update(this.editId, this.form);
+
+        this.showPanel = false;
+        this.fetchClients(); // Refresh the list
+        this.resetForm();
+        this.isUpdate = false;
+        this.editId = null;
+      } catch (error) {
+        this.error = error.message || "Failed to update clients";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    confirmDelete(client) {
+      this.deleteTitle = `Delete ${client.name}`;
+      this.deleteId = client.id;
+      this.showDeleteDialog = true;
+    },
+    async handleDelete() {
+      try {
+        this.loading = true;
+        await useClientStore.delete(this.deleteId);
+
+        await this.fetchClients(); // Refresh the list
+      } catch (error) {
+        this.error = error.message || "Failed to delete bank";
+      } finally {
+        this.loading = false;
+        this.showDeleteDialog = false;
+        this.deleteId = null;
+      }
+    },
+
+    togglePanel() {
+      this.showPanel = !this.showPanel;
+      if (this.showPanel) {
+        this.resetForm();
+        this.isUpdate = false;
+      }
+    },
+    resetForm() {
+      this.form = {
+        name: "",
+        address: "",
+        contact_person: "",
+        phone: "",
+      };
+      this.error = "";
+    },
     ColumnDefinitions() {
       this.columns = [
         {
@@ -258,19 +322,35 @@ export default {
             return h("div", { class: "text-sm" }, phone);
           },
         },
+        {
+          accessorKey: "address",
+          header: "address",
+          cell: ({ row }) => {
+            const address = row.original.address; // Access the nested vehicle object
+            return h("div", { class: "text-sm" }, address);
+          },
+        },
 
         {
           id: "actions",
           accessorKey: "actions",
           enableHiding: false,
+
           header: () =>
             h("div", { class: "relative text-right font-medium " }, ""),
 
           cell: ({ row }) => {
-            const ids = row.original;
+            const client = row.original;
 
             return h("div", { class: "relative text-right font-medium " }, [
-              h(DropdownAction, { ids }),
+              h(DropdownAction, {
+                item: client,
+                isEdit: true,
+                isDelete: true,
+                isShow: false,
+                onEdit: () => this.editClient(client), // match method from parent
+                onDelete: () => this.confirmDelete(client), // match method from parent
+              }),
             ]);
           },
         },

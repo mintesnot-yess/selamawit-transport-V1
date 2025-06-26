@@ -199,6 +199,9 @@ class ExpenseController extends Controller
             "file" => "nullable|max:2048",
         ]);
 
+
+
+
         // Set expense_type_id based on which category is provided
         $validated["expense_type_id"] =
             $request->General_category ??
@@ -227,6 +230,7 @@ class ExpenseController extends Controller
         }
 
         $validated["updated_by"] = Auth::id();
+
 
         $expense->update($validated);
 

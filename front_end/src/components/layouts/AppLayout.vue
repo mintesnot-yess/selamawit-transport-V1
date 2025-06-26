@@ -12,7 +12,7 @@
           <NotificationsPanel />
         </div>
       </header>
-      <div class="p-4 md:p-6 space-y-6 overflow-auto">
+      <div class="p-4 md:p-6 overflow-auto">
         <router-view :key="$route.fullPath" />
       </div>
     </SidebarInset>

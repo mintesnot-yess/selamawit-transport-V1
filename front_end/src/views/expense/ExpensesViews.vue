@@ -652,6 +652,7 @@ export default {
       try {
         const response = await useExpenseStore.store(this.form);
         await this.fetchExpenses();
+        this.error = null;
 
         this.showPanel = false;
       } catch (error) {
@@ -667,26 +668,37 @@ export default {
     editExpense(expense) {
       this.isUpdate = true;
       this.editId = expense.id;
-      const { category } = expense.expense_type;
+      const { category, id: expenseTypeId } = expense.expense_type;
+
+      // Validate required fields
+      if (!expenseTypeId) {
+        throw new Error("Expense type ID is required");
+      }
 
       this.form = {
-        expense_category: expense.expense_type.category,
-        General_category:
-          category === "General" ? expense.expense_type.id : null,
-        // vehicle_id: expense.vehicle_id ?? expense.vehicle_id,
-        vehicle_category: category === "Vehicle" ? category : null,
-        employee_id: category === "Employee" ? expense.employee_id : "",
-        employees_category: category === "Employee" ? category : null,
+        expense_category: category,
+        expense_type_id: expenseTypeId, // Add this line
 
-        selectedBank: expense.from_bank.id,
-        selectedAccount: expense.from_account.id,
-        toAccount: expense.to_account,
-        toBank: expense.to_bank.id,
+        // Category-specific fields
+        General_category: category === "General" ? expenseTypeId : null,
+        vehicles_id: expense.vehicle_id,
+        vehicle_category: category === "Vehicle" ? expenseTypeId : null,
+        employees_id: expense.employee_id,
+        employees_category: category === "Employee" ? expenseTypeId : null,
+
+        // Bank fields
+        selectedBank: expense.from_bank?.id || "",
+        selectedAccount: expense.from_account?.id || "",
+        toAccount: expense.to_account || "",
+        toBank: expense.to_bank?.id || "",
+
+        // Common fields
         amount: expense.amount,
-        paid_date: expense.paid_date,
-        remark: expense.remark,
-        file: expense.file,
+        paid_date: expense.paid_date?.split("T")[0] || "",
+        remark: expense.remark || "",
+        file: expense.file || null,
       };
+
       this.showPanel = true;
     },
 
@@ -700,6 +712,7 @@ export default {
         this.resetForm();
         this.isUpdate = false;
         this.editId = null;
+        this.error = null;
       } catch (error) {
         this.error = error.message || "Failed to update expense";
       } finally {

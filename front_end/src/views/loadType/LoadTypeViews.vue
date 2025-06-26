@@ -9,7 +9,7 @@
       </div>
       <div class="flex items-center gap-2">
         <Button
-          @click="showPanel = true"
+          @click="togglePanel()"
           variant="ghost"
           class="text-sm text-muted-foreground flex gap-1 items-center justify-center cursor-pointer"
         >
@@ -25,50 +25,47 @@
         :data="loadTypes"
         :isPagination="true"
         :isSearchable="true"
-        :is-filter-select="true"
-        filter-select-column="status"
-        filter-select-label="Status"
-        :filter-select-options="[
-          { label: 'All', value: '__all' },
-          { label: 'PENDING', value: 'PENDING' },
-          { label: 'IN_PROGRESS', value: 'IN_PROGRESS' },
-          { label: 'COMPLETED', value: 'COMPLETED' },
-          { label: 'CANCELLED', value: 'CANCELLED' },
-        ]"
+        :is-filter-select="false"
       />
     </div>
+    <ConfirmDelete
+      v-model:open="showDeleteDialog"
+      :title="deleteTitle"
+      description="Are you sure you want to delete this Load Type? This action cannot be undone."
+      confirm-label="Delete LoadType"
+      @confirm="handleDelete"
+    />
 
     <Panel
       v-model="showPanel"
-      title="Create A LoadType"
+      :title="isUpdate ? 'Update Load Type Information' : 'Create A Load Type'"
       description="Fill the LoadType Information"
     >
-      <form @submit.prevent="handleSubmitAdd" class="flex flex-col h-full">
+      <form @submit.prevent="handleSubmit" class="flex flex-col h-full">
         <div class="flex-1 space-y-2">
-          <FormField v-slot="{ componentField }" name="name">
+          <FormField name="name">
             <FormItem>
               <FormLabel>Site name</FormLabel>
               <FormControl>
-                <Input
-                  type="text"
-                  v-model="form.name"
-                  v-bind="componentField"
-                />
+                <Input type="text" v-model="form.name" />
               </FormControl>
-              <span class="text-sm pt-2 text-red-600" v-if="error">{{
-                error
-              }}</span>
+
               <FormMessage />
             </FormItem>
           </FormField>
         </div>
-        <Button type="submit">
-          <span v-if="loading">
-            <LoaderCircle
-              class="fa-solid size-6 fa-circle-notch animate-spin"
-            />
+        <div v-if="error" class="text-red-500 text-sm text-center mt-2">
+          {{ error }}
+        </div>
+        <Button
+          type="submit"
+          class="mt-2 w-full text-white font-semibold py-2 rounded-md transition-colors duration-200"
+        >
+          <span v-if="loading" class="flex items-center justify-center">
+            <LoaderCircle class="animate-spin mr-2 size-5" />
+            Loading...
           </span>
-          <span v-else> Submit </span>
+          <span v-else> {{ isUpdate ? "Edit" : "Submit" }} </span>
         </Button>
       </form>
     </Panel>
@@ -92,6 +89,7 @@ import {
 import { Table, DropdownAction } from "@/components/table";
 import { h, ref, shallowRef } from "vue";
 import useLoadTypeStore from "@/stores/loadTypes";
+import ConfirmDelete from "@/components/form/ConfirmDelete.vue";
 
 export default {
   components: {
@@ -108,6 +106,7 @@ export default {
     FormMessage,
     Input,
     Checkbox,
+    ConfirmDelete,
   },
   data() {
     return {
@@ -119,6 +118,15 @@ export default {
       form: {
         name: "",
       },
+      showPanel: false,
+      loading: false,
+      // updated component
+      isUpdate: false,
+      editId: null,
+      // deleted component
+      showDeleteDialog: false,
+      deleteTitle: "",
+      deleteId: null,
     };
   },
 
@@ -134,6 +142,13 @@ export default {
         console.table(this.loadTypes);
       } catch (error) {
         console.error("Failed to fetch users:", error);
+      }
+    },
+    handleSubmit() {
+      if (this.isUpdate) {
+        this.handleSubmitUpdate();
+      } else {
+        this.handleSubmitAdd();
       }
     },
     async handleSubmitAdd() {
@@ -158,6 +173,66 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    editLoadType(loadType) {
+      this.isUpdate = true;
+      this.editId = loadType.id;
+      this.form = {
+        name: loadType.name,
+      };
+      this.showPanel = true;
+    },
+
+    async handleSubmitUpdate() {
+      try {
+        this.loading = true;
+        const response = await useLoadTypeStore.update(this.editId, this.form);
+
+        this.showPanel = false;
+        this.fetchLoadTypes(); // Refresh the list
+        this.resetForm();
+        this.isUpdate = false;
+        this.editId = null;
+      } catch (error) {
+        this.error = error.message || "Failed to update load Type";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    confirmDelete(loadType) {
+      this.deleteTitle = `Delete ${loadType.name}`;
+      this.deleteId = loadType.id;
+      this.showDeleteDialog = true;
+    },
+    async handleDelete() {
+      try {
+        this.loading = true;
+        await useLoadTypeStore.delete(this.deleteId);
+
+        await this.fetchLoadTypes(); // Refresh the list
+      } catch (error) {
+        this.error = error.message || "Failed to delete Load Type";
+      } finally {
+        this.loading = false;
+        this.showDeleteDialog = false;
+        this.deleteId = null;
+      }
+    },
+
+    togglePanel() {
+      this.showPanel = !this.showPanel;
+      if (this.showPanel) {
+        this.resetForm();
+        this.isUpdate = false;
+      }
+    },
+    resetForm() {
+      this.form = {
+        name: "",
+      };
+      this.error = "";
     },
     ColumnDefinitions() {
       this.columns = [
@@ -203,14 +278,22 @@ export default {
           id: "actions",
           accessorKey: "actions",
           enableHiding: false,
+
           header: () =>
             h("div", { class: "relative text-right font-medium " }, ""),
 
           cell: ({ row }) => {
-            const ids = row.original;
+            const loadType = row.original;
 
             return h("div", { class: "relative text-right font-medium " }, [
-              h(DropdownAction, { ids }),
+              h(DropdownAction, {
+                item: loadType,
+                isEdit: true,
+                isDelete: true,
+                isShow: false,
+                onEdit: () => this.editLoadType(loadType), // match method from parent
+                onDelete: () => this.confirmDelete(loadType), // match method from parent
+              }),
             ]);
           },
         },

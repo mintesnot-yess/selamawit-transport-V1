@@ -9,7 +9,7 @@
       </div>
       <div class="flex items-center gap-2">
         <Button
-          @click="showPanel = true"
+          @click="togglePanel()"
           variant="ghost"
           class="text-sm text-muted-foreground flex gap-1 items-center justify-center cursor-pointer"
         >
@@ -26,32 +26,36 @@
         :isPagination="true"
         :isSearchable="true"
         :is-filter-select="true"
-        filter-select-column="status"
-        filter-select-label="Status"
+        filter-select-column="owner_type"
+        filter-select-label="Owner"
         :filter-select-options="[
           { label: 'All', value: '__all' },
-          { label: 'PENDING', value: 'PENDING' },
-          { label: 'IN_PROGRESS', value: 'IN_PROGRESS' },
-          { label: 'COMPLETED', value: 'COMPLETED' },
-          { label: 'CANCELLED', value: 'CANCELLED' },
+          { label: 'PRIVATE', value: 'PRIVATE' },
+          { label: 'OWNED', value: 'OWNED' },
         ]"
       />
     </div>
+    <ConfirmDelete
+      v-model:open="showDeleteDialog"
+      :title="deleteTitle"
+      description="Are you sure you want to delete this vehicle? This action cannot be undone."
+      confirm-label="Delete Vehicle"
+      @confirm="handleDelete"
+    />
 
     <Panel
       v-model="showPanel"
-      title="Create A Vehicle"
+      :title="isUpdate ? 'Update vehicle Information' : 'Create A Vehicle'"
       description="Fill the Vehicle Information"
     >
-      <form @submit.prevent="handleSubmitAdd" class="space-y-6">
-        <FormField v-slot="{ componentField }" name="vehicle_name">
+      <form @submit.prevent="handleSubmit" class="space-y-6">
+        <FormField name="vehicle_name">
           <FormItem>
             <FormLabel>Vehicle Name</FormLabel>
             <FormControl>
               <Input
                 type="text"
                 v-model="form.vehicle_name"
-                v-bind="componentField"
                 placeholder="Enter vehicle name"
               />
             </FormControl>
@@ -59,14 +63,13 @@
           </FormItem>
         </FormField>
 
-        <FormField v-slot="{ componentField }" name="plate_number">
+        <FormField name="plate_number">
           <FormItem>
             <FormLabel>Plate Number</FormLabel>
             <FormControl>
               <Input
                 type="text"
                 v-model="form.plate_number"
-                v-bind="componentField"
                 placeholder="Enter plate number"
               />
             </FormControl>
@@ -74,14 +77,13 @@
           </FormItem>
         </FormField>
 
-        <FormField v-slot="{ componentField }" name="owner_name">
+        <FormField name="owner_name">
           <FormItem>
             <FormLabel>Owner Name</FormLabel>
             <FormControl>
               <Input
                 type="text"
                 v-model="form.owner_name"
-                v-bind="componentField"
                 placeholder="Enter owner name"
               />
             </FormControl>
@@ -89,14 +91,13 @@
           </FormItem>
         </FormField>
 
-        <FormField v-slot="{ componentField }" name="owner_phone">
+        <FormField name="owner_phone">
           <FormItem>
             <FormLabel>Owner Phone</FormLabel>
             <FormControl>
               <Input
                 type="text"
                 v-model="form.owner_phone"
-                v-bind="componentField"
                 placeholder="Enter owner phone"
               />
             </FormControl>
@@ -104,10 +105,10 @@
           </FormItem>
         </FormField>
 
-        <FormField v-slot="{ componentField }" name="owner_type">
+        <FormField name="owner_type">
           <FormItem>
             <FormLabel>Owner Type</FormLabel>
-            <Select v-model="form.owner_type" v-bind="componentField">
+            <Select v-model="form.owner_type">
               <FormControl>
                 <SelectTrigger class="w-full">
                   <SelectValue placeholder="Select type" />
@@ -123,7 +124,7 @@
           </FormItem>
         </FormField>
 
-        <FormField v-slot="{ componentField }" name="libre">
+        <FormField name="libre">
           <FormItem>
             <FormLabel>Libre</FormLabel>
             <FormControl>
@@ -133,7 +134,6 @@
                   type="file"
                   class="sr-only"
                   @change="form.libre = $event.target.files[0]"
-                  v-bind="componentField"
                 />
                 <label
                   for="libre_input"
@@ -158,16 +158,13 @@
           {{ error }}
         </div>
 
-        <Button
-          :disabled="loading"
-          type="submit"
-          class="w-full py-3.5 rounded-xl"
-        >
-          <span v-if="!loading">Save Expense</span>
-          <span v-else class="flex items-center gap-2">
-            <Loader2 class="h-4 w-4 animate-spin" />
-            Processing...
+        <Button type="submit" class="w-full">
+          <span v-if="loading">
+            <LoaderCircle
+              class="fa-solid size-6 fa-circle-notch animate-spin"
+            />
           </span>
+          <span v-else> {{ isUpdate ? "Edit" : "Submit" }} </span>
         </Button>
       </form>
     </Panel>
@@ -175,7 +172,13 @@
 </template>
 
 <script  >
-import { ArrowUpDown, CirclePlus, Loader2, Upload } from "lucide-vue-next";
+import {
+  ArrowUpDown,
+  CirclePlus,
+  Loader2,
+  LoaderCircle,
+  Upload,
+} from "lucide-vue-next";
 import { Panel } from "@/components/panels";
 import {
   Button,
@@ -197,6 +200,8 @@ import {
 import { Table, DropdownAction } from "@/components/table";
 import { h, ref, shallowRef } from "vue";
 import useVehicleStore from "@/stores/vehicles";
+import ConfirmDelete from "@/components/form/ConfirmDelete.vue";
+import router from "@/router";
 
 export default {
   components: {
@@ -221,6 +226,8 @@ export default {
     Loader2,
     ArrowUpDown,
     CirclePlus,
+    LoaderCircle,
+    ConfirmDelete,
   },
   data() {
     return {
@@ -233,10 +240,17 @@ export default {
         vehicle_name: "",
         plate_number: "",
         owner_name: "",
-        owner_name: "",
+        owner_phone: "",
         owner_type: "",
         libre: "",
       },
+      // updated component
+      isUpdate: false,
+      editId: null,
+      // deleted component
+      showDeleteDialog: false,
+      deleteTitle: "",
+      deleteId: null,
     };
   },
   created() {
@@ -251,6 +265,13 @@ export default {
         console.table(this.vehicles);
       } catch (error) {
         console.error("Failed to fetch users:", error);
+      }
+    },
+    handleSubmit() {
+      if (this.isUpdate) {
+        this.handleSubmitUpdate();
+      } else {
+        this.handleSubmitAdd();
       }
     },
     async handleSubmitAdd() {
@@ -272,6 +293,70 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    editVehicle(vehicle) {
+      this.isUpdate = true;
+      this.editId = vehicle.id;
+      this.form = {
+        vehicle_name: vehicle.vehicle_name,
+        plate_number: vehicle.plate_number,
+        owner_name: vehicle.owner_name,
+        owner_type: vehicle.owner_type,
+        owner_phone: vehicle.owner_phone,
+        libre: vehicle.libre,
+      };
+      this.showPanel = true;
+    },
+
+    async handleSubmitUpdate() {
+      try {
+        this.loading = true;
+        const response = await useVehicleStore.update(this.editId, this.form);
+
+        this.showPanel = false;
+        this.fetchVehicles(); // Refresh the list
+        this.resetForm();
+        this.isUpdate = false;
+        this.editId = null;
+      } catch (error) {
+        this.error = error.message || "Failed to update expense";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    confirmDelete(vehicle) {
+      this.deleteTitle = `Delete ${vehicle.name}`;
+      this.deleteId = vehicle.id;
+      this.showDeleteDialog = true;
+    },
+    async handleDelete() {
+      try {
+        this.loading = true;
+        await useVehicleStore.delete(this.deleteId);
+
+        await this.fetchVehicles(); // Refresh the list
+      } catch (error) {
+        this.error = error.message || "Failed to delete vehicle";
+      } finally {
+        this.loading = false;
+        this.showDeleteDialog = false;
+        this.deleteId = null;
+      }
+    },
+
+    togglePanel() {
+      this.showPanel = !this.showPanel;
+      if (this.showPanel) {
+        this.resetForm();
+        this.isUpdate = false;
+      }
+    },
+    resetForm() {
+      this.form = {
+        name: "",
+      };
+      this.error = "";
     },
     ColumnDefinitions() {
       this.columns = [
@@ -297,11 +382,16 @@ export default {
         },
 
         {
-          accessorKey: "plate_number",
-          header: "plate_number",
+          accessorKey: "vehicle",
+          header: "Vehicle",
           cell: ({ row }) => {
-            const plate_number = row.getValue("plate_number"); // Access the nested vehicle object
-            return h("div", { class: "text-sm" }, plate_number);
+            const plate_number = row.original.plate_number; // Access the nested vehicle object
+            const vehicle_name = row.original.vehicle_name; // Access the nested vehicle object
+            return h(
+              "div",
+              { class: "text-sm" },
+              vehicle_name + " | " + plate_number
+            );
           },
         },
         {
@@ -348,11 +438,24 @@ export default {
             h("div", { class: "relative text-right font-medium " }, ""),
 
           cell: ({ row }) => {
-            const ids = row.original;
+            const vehicle = row.original;
 
-            return h("div", { class: "relative text-right font-medium " }, [
-              h(DropdownAction, { ids }),
-            ]);
+            return h(
+              "div",
+              { class: "relative text-right font-medium " },
+              [
+                h(DropdownAction, {
+                  item: vehicle,
+                  isEdit: true,
+                  isDelete: true,
+                  isShow: true,
+                  onEdit: () => this.editVehicle(vehicle), // match method from parent
+                  onDelete: () => this.confirmDelete(vehicle), // match method from parent
+                  onShow: () => router.push(`/vehicle/detail/${vehicle.id}`),
+                }),
+              ],
+              null
+            );
           },
         },
       ];

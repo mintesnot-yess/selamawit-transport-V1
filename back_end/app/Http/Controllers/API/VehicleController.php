@@ -99,7 +99,7 @@ class VehicleController extends Controller
             );
         }
 
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             "plate_number" => [
                 "required",
                 "string",
@@ -112,15 +112,7 @@ class VehicleController extends Controller
             "libre" => "nullable|max:2048",
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(
-                [
-                    "message" => "Validation error",
-                    "errors" => $validator->errors(),
-                ],
-                422
-            );
-        }
+
 
         if ($request->hasFile("libre")) {
             $librePath = $request->file("libre")->store("libres", "public");

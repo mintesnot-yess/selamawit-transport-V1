@@ -50,6 +50,14 @@ class User extends Authenticatable implements LaratrustUser
             "password" => "hashed",
         ];
     }
+
+
+    public function role()
+    {
+        return $this->belongsToMany(Role::class);
+
+    }
+
     // public function roles()
     // {
     //     return $this->belongsToMany(Role::class);
@@ -73,10 +81,10 @@ class User extends Authenticatable implements LaratrustUser
     {
         $url = url(
             config("app.frontend_url") .
-                "/reset-password?token=" .
-                $token .
-                "&email=" .
-                $this->email
+            "/reset-password?token=" .
+            $token .
+            "&email=" .
+            $this->email
         );
 
         $this->notify(new ResetPasswordNotification($url));

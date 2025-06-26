@@ -106,7 +106,7 @@ const  useClientStore = {
     // Delete a vehicle by ID
     async delete(id:any) {
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_API_URL}${apiEndPoints.clients}/${id}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_API_URL}${apiEndPoints.deleteClient(id)}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                 }

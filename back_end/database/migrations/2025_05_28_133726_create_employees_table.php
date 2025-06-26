@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->string('last_name', 100);
             $table->string('email', 255);
             $table->string('phone', 50)->nullable();
-            $table->bigInteger('id_file')->nullable();
+            $table->string('id_file')->nullable();
             $table->enum('type', ['STUFF', 'DRIVER', 'MECHANIC'])->nullable();
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->foreignId('updated_by')->constrained('users')->cascadeOnDelete();

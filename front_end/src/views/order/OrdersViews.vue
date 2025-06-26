@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 <template>
   <div class="flex flex-col gap-6 p-6 rounded-xl border shadow-sm bg-card">
     <div class="flex items-start justify-between">
@@ -60,7 +52,6 @@
       <form
         @submit.prevent="handleSubmit"
         class="flex flex-col gap-4 h-full font-sans"
-        style="font-family: 'Inter', sans-serif"
       >
         <div class="flex-1 space-y-2 overflow-y-scroll py-3 px-2">
           <!-- Client -->

@@ -24,21 +24,7 @@ export  interface Expense {
   from: string,
   to: string,
  }
-
- export type Role = {
-  id?: number;
-  name: string;
-  staff_count?: number;
-  permissions?: number[];
-  locked?: boolean;
-  created_date?: string;
-};
-
-export type Permission = {
-  id: number;
-  name: string;
-};
-
+ 
 export type User = {
   id?: number | null;
   email: string;
@@ -68,4 +54,22 @@ export type Token = {
   sortable?: boolean;
   render: (item: any) => string | JSX.Element;
   width?: string;
+}
+
+// types/index.ts
+export interface Permission {
+  id: string
+  name: string
+}
+
+export interface PermissionGroup {
+  name: string
+  permissions: Permission[]
+}
+
+export interface Role {
+  id?: string
+  name: string
+  permissions: string[]
+  is_protected?: boolean
 }

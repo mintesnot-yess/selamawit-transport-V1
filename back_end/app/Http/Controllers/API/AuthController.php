@@ -17,9 +17,9 @@ class AuthController extends Controller
 {
     public function index()
     {
-        $users = User::all();
+
         $perPage = request()->input("per_page", 15);
-        $users = User::paginate($perPage);
+        $users = User::with("role")->paginate($perPage);
         $roles = Role::all();
 
         return response()->json([
@@ -109,70 +109,41 @@ class AuthController extends Controller
     // update
     public function update(Request $request, $id): JsonResponse
     {
-        // Find user by ID
         $user = User::findOrFail($id);
 
-        // Validate request
-        $validator = Validator::make($request->all(), [
-            "name" => "required|string|max:255",
-            "email" =>
-                "required|string|email|max:255|unique:users,email," . $user->id,
-            "password" => "nullable|string|min:8",
-            "role" => "sometimes|exists:roles,id",
+        $request->validate([
+            "name" => "sometimes|required|string|max:255",
+            "email" => "sometimes|required|string|email|max:255|unique:users,email,$id",
+            "role" => "sometimes|exists:roles,id"
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(
-                [
-                    "errors" => $validator->errors(),
-                ],
-                422
-            );
-        }
-
-        // Update user fields
-        if ($request->has("name")) {
-            $user->name = $request->input("name");
-        }
-
-        if ($request->has("email")) {
-            $user->email = $request->input("email");
-        }
-
-        if ($request->has("password")) {
-            $user->password = Hash::make($request->input("password"));
-        }
-
-        // Optional: Track who updated this user
+        // Update basic fields
+        $user->fill($request->only(['name', 'email']));
         $user->updated_by = Auth::id();
-        log_action(
-            "Update " .
-                class_basename($user) .
-                " " .
-                $user->name .
-                " | " .
-                $user->email .
-                " " .
-                $user->id
-        );
-
-        // Save user
         $user->save();
-        $roleId = $request->role;
 
         // Handle role assignment
-        if ($request->has("role")) {
-            $user->roles()->attach($roleId, [
-                "user_type" => get_class($user),
+        if ($request->has('role')) {
+            // Use sync() instead of attach() to avoid duplicate relations
+            $user->roles()->sync([
+                $request->role => [
+                    'user_type' => get_class($user),
+                    'updated_by' => Auth::id()
+                ]
             ]);
         }
 
+
+        log_action(
+            "Update " . class_basename($user) . " " .
+            $user->name . " | " . $user->email . " " . $user->id
+        );
+
         return response()->json([
             "message" => "User updated successfully",
-            "user" => $user->load("roles"), // Assuming you have a roles relationship
+            "user" => $user->load('roles')
         ]);
     }
-    // destroy
     public function destroy($id): JsonResponse
     {
         $user = User::findOrFail($id);
@@ -182,6 +153,7 @@ class AuthController extends Controller
             "message" => "User deleted successfully",
         ]);
     }
+
     public function bulkDelete(Request $request)
     {
         // Validate input

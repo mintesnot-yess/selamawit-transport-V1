@@ -1,130 +1,135 @@
 <template>
-  <!-- Welcome banner -->
-  <div class="rounded-xl p-6">
-    <div
-      class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-    >
-      <div class="flex items-start justify-between">
+  <div class="space-y-6">
+    <!-- Welcome banner -->
+    <div class="rounded-xl p-6">
+      <div
+        class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+      >
+        <div class="flex items-start justify-between">
+          <div>
+            <h4 class="text-3xl font-bold my-1">Hi, Minte</h4>
+            <p class="text-lg text-muted-foreground">
+              See the latest on your shipments and deliveries.
+            </p>
+          </div>
+        </div>
+        <!-- <Button
+         @click="showPanel = true"
+         class="bg-primary text-accent rounded-lg px-4 py-2 text-sm font-medium transition-colors backdrop-blur-sm self-start md:self-auto"
+       >
+         View Analytics
+       </Button> -->
+        <!-- <DataRangePicker v-model:range="dateRange" /> -->
+      </div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <StatCard
+        icon="User"
+        title="System Users"
+        :value="users.length"
+        color="blue"
+      />
+      <StatCard
+        icon="Truck"
+        title="Vehicles"
+        :value="vehicles.length"
+        color="green"
+      />
+      <StatCard
+        icon="Users"
+        title="Employees"
+        :value="employees.length"
+        color="purple"
+      />
+      <StatCard
+        icon="ShoppingCart"
+        title="Total Orders"
+        :value="orders.length"
+        color="orange"
+      />
+      <StatCard
+        icon="ChartNoAxesColumnIcon"
+        title="This Year Expense"
+        :value="formatCurrency(expenses)"
+        color="red"
+      />
+      <StatCard
+        icon="ChartNoAxesCombined"
+        title="This Year Income"
+        :value="formatCurrency(calculateTotal(incomeData))"
+        color="teal"
+      />
+      <!-- <StatCard
+       icon="ChartNoAxesCombined"
+       title="This Month Expense"
+       value="$3,210"
+       color="amber"
+     /> -->
+    </div>
+    <div class="rounded-xl p-6 border border-surface-200 lg:col-span-2 bg-card">
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
+      >
         <div>
-          <h4 class="text-3xl font-bold my-1">Hi, Minte</h4>
-          <p class="text-lg text-muted-foreground">
-            See the latest on your shipments and deliveries.
+          <h4 class="text-lg font-semibold leading-none tracking-tight my-1">
+            Income and Expense Overview
+          </h4>
+          <p class="text-sm text-muted-foreground">
+            Total performance for last 1 year
           </p>
         </div>
-      </div>
-
-      <!-- <Button
-        @click="showPanel = true"
-        class="bg-primary text-accent rounded-lg px-4 py-2 text-sm font-medium transition-colors backdrop-blur-sm self-start md:self-auto"
-      >
-        View Analytics
-      </Button> -->
-      <!-- <DataRangePicker v-model:range="dateRange" /> -->
-    </div>
-  </div>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-    <StatCard
-      icon="User"
-      title="System Users"
-      :value="users.length"
-      color="blue"
-    />
-    <StatCard
-      icon="Truck"
-      title="Vehicles"
-      :value="vehicles.length"
-      color="green"
-    />
-    <StatCard
-      icon="Users"
-      title="Employees"
-      :value="employees.length"
-      color="purple"
-    />
-    <StatCard
-      icon="ShoppingCart"
-      title="Total Orders"
-      :value="orders.length"
-      color="orange"
-    />
-    <StatCard
-      icon="ChartNoAxesColumnIcon"
-      title="This Year Expense"
-      :value="formatCurrency(expenses)"
-      color="red"
-    />
-    <StatCard
-      icon="ChartNoAxesCombined"
-      title="This Year Income"
-      :value="formatCurrency(calculateTotal(incomeData))"
-      color="teal"
-    />
-    <!-- <StatCard
-      icon="ChartNoAxesCombined"
-      title="This Month Expense"
-      value="$3,210"
-      color="amber"
-    /> -->
-  </div>
-
-  <div class="rounded-xl p-6 border border-surface-200 lg:col-span-2 bg-card">
-    <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
-    >
-      <div>
-        <h4 class="text-lg font-semibold leading-none tracking-tight my-1">
-          Income and Expense Overview
-        </h4>
-        <p class="text-sm text-muted-foreground">
-          Total performance for last 1 year
-        </p>
-      </div>
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 bg-indigo-600 rounded-full"></span>
-          <span class="text-xs text-surface-500">Income</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 bg-indigo-200 rounded-full"></span>
-          <span class="text-xs text-surface-500">Expose</span>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 bg-indigo-600 rounded-full"></span>
+            <span class="text-xs text-surface-500">Income</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 bg-indigo-200 rounded-full"></span>
+            <span class="text-xs text-surface-500">Expose</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="h-64">
-      <AreaChart
-        :labels="months"
-        :income-data="incomeData"
-        :expense-data="expenseData"
-      />
-    </div>
-  </div>
-  <div class="flex flex-col gap-6 p-6 rounded-xl border shadow-sm bg-card">
-    <div class="flex items-start justify-between">
-      <div class="flex gap-2 flex-col">
-        <h4 class="text-lg font-semibold leading-none tracking-tight">
-          Orders
-        </h4>
-        <p class="text-sm text-muted-foreground">This month's order summary</p>
+      <div class="h-64">
+        <AreaChart
+          :labels="months"
+          :income-data="incomeData"
+          :expense-data="expenseData"
+        />
       </div>
-      <router-link to="/orders" class="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          class="text-sm text-muted-foreground cursor-pointer"
-          >Show more</Button
-        >
-      </router-link>
     </div>
 
-    <div class="rounded-lg overflow-hidden">
-      <!-- <Table :isSearchable="true" /> -->
-      <Table
-        :columns="columns"
-        :data="orders"
-        :is-searchable="false"
-        :is-pagination="false"
-        filter-column="status"
-      />
-    </div>
+    <template v-if="orders.length">
+      <div class="flex flex-col gap-6 p-6 rounded-xl border shadow-sm bg-card">
+        <div class="flex items-start justify-between">
+          <div class="flex gap-2 flex-col">
+            <h4 class="text-lg font-semibold leading-none tracking-tight">
+              Orders
+            </h4>
+            <p class="text-sm text-muted-foreground">
+              This month's order summary
+            </p>
+          </div>
+          <router-link to="/orders" class="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              class="text-sm text-muted-foreground cursor-pointer"
+              >Show more</Button
+            >
+          </router-link>
+        </div>
+
+        <div class="rounded-lg overflow-hidden">
+          <!-- <Table :isSearchable="true" /> -->
+          <Table
+            :columns="columns"
+            :data="orders"
+            :is-searchable="false"
+            :is-pagination="false"
+            filter-column="status"
+          />
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 

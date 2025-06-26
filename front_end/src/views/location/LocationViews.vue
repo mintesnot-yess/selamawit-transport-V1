@@ -9,7 +9,7 @@
       </div>
       <div class="flex items-center gap-2">
         <Button
-          @click="showPanel = true"
+          @click="togglePanel()"
           variant="ghost"
           class="text-sm text-muted-foreground flex gap-1 items-center justify-center cursor-pointer"
         >
@@ -25,50 +25,47 @@
         :data="locations"
         :isPagination="true"
         :isSearchable="true"
-        :is-filter-select="true"
-        filter-select-column="status"
-        filter-select-label="Status"
-        :filter-select-options="[
-          { label: 'All', value: '__all' },
-          { label: 'PENDING', value: 'PENDING' },
-          { label: 'IN_PROGRESS', value: 'IN_PROGRESS' },
-          { label: 'COMPLETED', value: 'COMPLETED' },
-          { label: 'CANCELLED', value: 'CANCELLED' },
-        ]"
+        :is-filter-select="false"
       />
     </div>
+    <ConfirmDelete
+      v-model:open="showDeleteDialog"
+      :title="deleteTitle"
+      description="Are you sure you want to delete this Location? This action cannot be undone."
+      confirm-label="Delete Location"
+      @confirm="handleDelete"
+    />
 
     <Panel
       v-model="showPanel"
-      title="Create A Location"
+      :title="isUpdate ? 'Update Location Information' : 'Create A Location'"
       description="Fill the Location Information"
     >
-      <form @submit.prevent="handleSubmitAdd" class="flex flex-col h-full">
+      <form @submit.prevent="handleSubmit" class="flex flex-col h-full">
         <div class="flex-1 space-y-2">
-          <FormField v-slot="{ componentField }" name="name">
+          <FormField name="name">
             <FormItem>
               <FormLabel>Site name</FormLabel>
               <FormControl>
-                <Input
-                  v-model="form.location_name"
-                  type="text"
-                  v-bind="componentField"
-                />
+                <Input v-model="form.location_name" type="text" />
               </FormControl>
-              <div v-if="error" class="text-red-500 text-sm mt-2">
-                {{ error }}
-              </div>
+
               <FormMessage />
             </FormItem>
           </FormField>
         </div>
-        <Button type="submit">
-          <span v-if="loading">
-            <LoaderCircle
-              class="fa-solid size-6 fa-circle-notch animate-spin"
-            />
+        <div v-if="error" class="text-red-500 text-sm text-center mt-2">
+          {{ error }}
+        </div>
+        <Button
+          type="submit"
+          class="mt-2 w-full text-white font-semibold py-2 rounded-md transition-colors duration-200"
+        >
+          <span v-if="loading" class="flex items-center justify-center">
+            <LoaderCircle class="animate-spin mr-2 size-5" />
+            Loading...
           </span>
-          <span v-else> Submit </span>
+          <span v-else> {{ isUpdate ? "Edit" : "Submit" }} </span>
         </Button>
       </form>
     </Panel>
@@ -92,6 +89,7 @@ import {
 import { Table, DropdownAction } from "@/components/table";
 import { h, ref, shallowRef } from "vue";
 import useLocationStore from "@/stores/locations";
+import ConfirmDelete from "@/components/form/ConfirmDelete.vue";
 
 export default {
   components: {
@@ -107,10 +105,11 @@ export default {
     FormMessage,
     Input,
     Checkbox,
+    ConfirmDelete,
+    CirclePlus,
   },
   data() {
     return {
-      showPanel: false,
       error: false,
       loading: false,
       locations: [],
@@ -118,6 +117,15 @@ export default {
       form: {
         location_name: "",
       },
+      showPanel: false,
+      loading: false,
+      // updated component
+      isUpdate: false,
+      editId: null,
+      // deleted component
+      showDeleteDialog: false,
+      deleteTitle: "",
+      deleteId: null,
     };
   },
   created() {
@@ -132,6 +140,13 @@ export default {
         console.table(this.locations);
       } catch (error) {
         console.error("Failed to fetch users:", error);
+      }
+    },
+    handleSubmit() {
+      if (this.isUpdate) {
+        this.handleSubmitUpdate();
+      } else {
+        this.handleSubmitAdd();
       }
     },
     async handleSubmitAdd() {
@@ -159,7 +174,65 @@ export default {
         this.loading = false;
       }
     },
+    editLocation(location) {
+      this.isUpdate = true;
+      this.editId = location.id;
+      this.form = {
+        location_name: location.location_name,
+      };
+      this.showPanel = true;
+    },
 
+    async handleSubmitUpdate() {
+      try {
+        this.loading = true;
+        const response = await useLocationStore.update(this.editId, this.form);
+
+        this.showPanel = false;
+        this.fetchLocation(); // Refresh the list
+        this.resetForm();
+        this.isUpdate = false;
+        this.editId = null;
+      } catch (error) {
+        this.error = error.message || "Failed to update expense";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    confirmDelete(location) {
+      this.deleteTitle = `Delete ${location.location_name}`;
+      this.deleteId = location.id;
+      this.showDeleteDialog = true;
+    },
+    async handleDelete() {
+      try {
+        this.loading = true;
+        await useLocationStore.delete(this.deleteId);
+
+        await this.fetchLocation(); // Refresh the list
+      } catch (error) {
+        this.error = error.message || "Failed to delete bank";
+      } finally {
+        this.loading = false;
+        this.showDeleteDialog = false;
+        this.deleteId = null;
+      }
+    },
+
+    togglePanel() {
+      this.showPanel = !this.showPanel;
+      if (this.showPanel) {
+        this.resetForm();
+        this.isUpdate = false;
+      }
+    },
+    resetForm() {
+      this.form = {
+        location_name: "",
+      };
+      this.error = "";
+    },
     ColumnDefinitions() {
       this.columns = [
         {
@@ -204,14 +277,22 @@ export default {
           id: "actions",
           accessorKey: "actions",
           enableHiding: false,
+
           header: () =>
             h("div", { class: "relative text-right font-medium " }, ""),
 
           cell: ({ row }) => {
-            const ids = row.original;
+            const location = row.original;
 
             return h("div", { class: "relative text-right font-medium " }, [
-              h(DropdownAction, { ids }),
+              h(DropdownAction, {
+                item: location,
+                isEdit: true,
+                isDelete: true,
+                isShow: false,
+                onEdit: () => this.editLocation(location), // match method from parent
+                onDelete: () => this.confirmDelete(location), // match method from parent
+              }),
             ]);
           },
         },

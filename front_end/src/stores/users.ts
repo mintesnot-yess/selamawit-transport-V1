@@ -122,33 +122,31 @@ const   useUserStore = {
     },
 
     // // Update a user
-    // async update(id, userData) {
-    //     try {
-    //         const response = await axios.put(`${API_BASE_URL}/users/${id}`, userData, {
-    //             headers: {
-    //                 'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-    //                 'Content-Type': 'application/json',
-    //             }
-    //         });
-    //         return response.data;
-    //     } catch (error) {
-    //         throw this.handleError(error);
-    //     }
-    // },
+    async update(id: null, userData: []) {
+        try {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}${apiEndPoints.updateUser(id)}?_method=PUT`, userData, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                 }
+            });
+            return response.data;
+        } catch (error) {
+         }
+    },
 
     // // Delete a user
-    // async delete(id) {
-    //     try {
-    //         const response = await axios.delete(`${API_BASE_URL}/users/${id}`, {
-    //             headers: {
-    //                 'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-    //             }
-    //         });
-    //         return response.data;
-    //     } catch (error) {
-    //         throw this.handleError(error);
-    //     }
-    // },
+    async delete(id: null) {
+        try {
+            const response = await axios.delete(`${import.meta.env.VITE_API_URL}${apiEndPoints.deleteUser(id)}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            // throw this.handleError(error);
+        }
+    },
 
     // // multiple Delete a user
     // async bulkDelete(ids) {

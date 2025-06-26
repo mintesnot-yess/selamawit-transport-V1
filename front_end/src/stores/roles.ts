@@ -1,5 +1,6 @@
 import api from '@/api';
 import apiEndPoints from '@/components/constants';
+import { AUTH_TOKEN_KEY } from '@/key';
 // import { useProfileStore } from '@/stores/profile';
 import axios from 'axios';
 
@@ -9,7 +10,7 @@ const   useRoleStore = {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_URL}${apiEndPoints.roles}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem(AUTH_TOKEN_KEY)}`
                 },
                 params: {
                     page: params.page || 1,
@@ -65,12 +66,12 @@ const   useRoleStore = {
 
             });
 
-    //         // Transform response if needed
+            // Transform response if needed
             const responseData = response.data;
 
-    //         // const profile = useProfileStore();
-    //         // profile.user = response.data;
-    //         // If API returns data directly without meta wrapper
+            // const profile = useProfileStore();
+            // profile.user = response.data;
+            // If API returns data directly without meta wrapper
             if (Array.isArray(responseData)) {
                 return {
                     data: responseData,

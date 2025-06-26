@@ -26,3 +26,4 @@ export * from "./textarea";
 export * from "./range-calendar";
 export * from "./alert-dialog";
 export * from "./tabs";
+export * from "./badge";

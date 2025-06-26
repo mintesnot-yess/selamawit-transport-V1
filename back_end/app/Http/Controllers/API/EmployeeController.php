@@ -39,7 +39,11 @@ class EmployeeController extends Controller
             "email" => "required|email|unique:employees",
             "phone" => "required|string|max:20",
             "type" => "required|in:STUFF,DRIVER,MECHANIC",
+            "id_file" => "required|file|mimes:png,jpg,jpeg|max:2048",
+
         ]);
+        $filePath = $request->file('id_file')->store('employee_files', 'public');
+
 
         $employee = Employee::create([
             "first_name" => $request->first_name,
@@ -47,6 +51,7 @@ class EmployeeController extends Controller
             "email" => $request->email,
             "phone" => $request->phone,
             "type" => $request->type,
+            "id_file" => $filePath,
             "hire_date" => $request->hire_date,
             "created_by" => Auth::id(),
             "updated_by" => Auth::id(),
@@ -69,18 +74,21 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             "first_name" => "sometimes|string|max:255",
             "last_name" => "sometimes|string|max:255",
             "email" =>
                 "sometimes|email|unique:employees,email," . $employee->id,
             "phone" => "sometimes|string|max:20",
             "type" => "sometimes|in:STUFF,DRIVER,MECHANIC",
+            "id_file" => "nullable"
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(["errors" => $validator->errors()], 422);
+        if ($request->hasFile("id_file")) {
+            $idFilePath = $request->file("id_file")->store("employees", "public");
+            $employee->id_file = $idFilePath;
         }
+
 
         $employee->update($request->all() + ["updated_by" => Auth::id()]);
 
