@@ -46,7 +46,7 @@ const handleClose = () => {
     <SheetContent
       :side="position"
       :closable="closable"
-      :class="cn('flex flex-col py-4', props.class)"
+      :class="cn('flex flex-col py-4 ', props.class)"
     >
       <SheetHeader>
         <SheetTitle>{{ title }}</SheetTitle>

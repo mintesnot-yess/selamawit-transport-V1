@@ -1,206 +1,262 @@
-import api from '@/api';
-import apiEndPoints from '@/components/constants';
-import { AUTH_TOKEN_KEY } from '@/key';
-// import { useProfileStore } from '@/stores/profile';
-import axios from 'axios';
+// @/stores/useRoleStore.ts
 
-const   useRoleStore = {
-    // Get all roles
-    async getAll(params = {page:null,perPage:null,search:null}) {
+import apiEndPoints from '@/components/constants'
+import axios from 'axios'
+
+ const useRoleStore = {
+    formLoading: false,
+    roles: [],
+    permissions: [] as string[], // This will hold your permission strings
+
+    async fetchPermissions() {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_URL}${apiEndPoints.roles}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem(AUTH_TOKEN_KEY)}`
+                    Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+                },
+            })
+
+            const data = response.data
+
+            if (Array.isArray(data)) {
+                this.permissions = data
+            } else if (data.items) {
+                this.permissions = data.items
+            } else {
+                throw new Error('Unexpected permissions response format')
+            }
+
+            return this.permissions
+        } catch (error) {
+            console.error('Failed to fetch permissions:', error)
+            this.permissions = []
+        }
+    },
+
+    // Existing methods below
+    async getAll(params = { page: null, perPage: null, search: null }) {
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}${apiEndPoints.roles}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
                 },
                 params: {
                     page: params.page || 1,
-                    per_page: params.perPage || 15, // Match your frontend default
-                    search: params.search || ''
-                }
-            });
+                    per_page: params.perPage || 15,
+                    search: params.search || '',
+                },
+            })
 
-            // Transform response if needed
-            const responseData = response.data;
+            const responseData = response.data
 
-            // If API returns data directly without meta wrapper
             if (Array.isArray(responseData)) {
                 return {
                     data: responseData,
                     meta: {
                         current_page: 1,
-                        per_page: params.perPage || 5,
+                        per_page: params.perPage || 15,
                         total: responseData.length,
                         last_page: 1,
                         from: 1,
-                        to: responseData.length
-                    }
-                };
+                        to: responseData.length,
+                    },
+                }
             }
 
-            // If API returns items/pagination instead of data/meta
             if (responseData.items && responseData.pagination) {
                 return {
                     data: responseData.items,
-                    meta: responseData.pagination
-                };
+                    meta: responseData.pagination,
+                }
             }
 
-            // If already in correct format
             if (responseData.data && responseData.meta) {
-                return responseData;
+                return responseData
             }
 
-            throw new Error('Unexpected API response format');
-
+            throw new Error('Unexpected API response format')
         } catch (error) {
-            // throw this.handleError(error);
+            console.error('Error fetching roles:', error)
+            return {
+                data: [],
+                meta: {
+                    current_page: 1,
+                    per_page: 15,
+                    total: 0,
+                    last_page: 1,
+                    from: 0,
+                    to: 0,
+                },
+            }
         }
     },
 
     async getAllRole() {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}${apiEndPoints.user}`, {
+            const response = await axios.get(`import.meta.env.VITE_API_URL}${apiEndPoints.roles}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
                 },
+            })
 
-            });
+            const responseData = response.data
 
-            // Transform response if needed
-            const responseData = response.data;
-
-            // const profile = useProfileStore();
-            // profile.user = response.data;
-            // If API returns data directly without meta wrapper
             if (Array.isArray(responseData)) {
                 return {
                     data: responseData,
                     meta: {
                         current_page: 1,
-                        per_page:  5,
+                        per_page: 5,
                         total: responseData.length,
                         last_page: 1,
                         from: 1,
-                        to: responseData.length
-                    }
-                };
+                        to: responseData.length,
+                    },
+                }
             }
 
-    //         // If API returns items/pagination instead of data/meta
             if (responseData.items && responseData.pagination) {
                 return {
                     data: responseData.items,
-                    meta: responseData.pagination
-                };
+                    meta: responseData.pagination,
+                }
             }
 
-    //         // If already in correct format
             if (responseData.data && responseData.meta) {
-                return responseData;
+                return responseData
             }
 
-            throw new Error('Unexpected API response format');
-
+            throw new Error('Unexpected user response format')
         } catch (error) {
-         }
-    },
-
-    // Create a new user
-    async register(userData:[]) {
-        try {
-
-            const response = await api.post(apiEndPoints.user, userData);
-            console.log(apiEndPoints.user);
-
-            return response.data;
-
-        } catch (error:any) {
-            throw new Error(
-                error.response?.data?.message ||
-                error.response?.data?.errors ||
-                "Registration failed",
-            );
+            console.error('Error fetching users:', error)
+            return {
+                data: [],
+                meta: {
+                    current_page: 1,
+                    per_page: 5,
+                    total: 0,
+                    last_page: 1,
+                    from: 0,
+                    to: 0,
+                },
+            }
         }
     },
 
-    // // Update a user
-    // async update(id, userData) {
-    //     try {
-    //         const response = await axios.put(`${API_BASE_URL}/roles/${id}`, userData, {
-    //             headers: {
-    //                 'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-    //                 'Content-Type': 'application/json',
-    //             }
-    //         });
-    //         return response.data;
-    //     } catch (error) {
-    //         throw this.handleError(error);
-    //     }
-    // },
+  // Create a new role
+  async store(roleData: any) {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        throw new Error("Authentication token not found. Please log in again.");
+      }
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}${apiEndPoints.roles}`, roleData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data;
+    } catch (error) {
+     }
+  },
 
-    // // Delete a user
-    // async delete(id) {
-    //     try {
-    //         const response = await axios.delete(`${API_BASE_URL}/roles/${id}`, {
-    //             headers: {
-    //                 'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-    //             }
-    //         });
-    //         return response.data;
-    //     } catch (error) {
-    //         throw this.handleError(error);
-    //     }
-    // },
+  // Update a role
+  async update(id: any, roleData: any) {
+    try {
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL}${apiEndPoints.updateRole(id)}`,
+        roleData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+    //   throw this.handleError(error);
+    }
+  },
+  // Get all permissions for a role
+  async getPermissions(roleId: any) {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        throw new Error("Authentication token not found. Please log in again.");
+      }
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}${apiEndPoints.getRolePermissions(roleId)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+     }
+  },
 
-    // // multiple Delete a user
-    // async bulkDelete(ids) {
-    //     try {
-    //         const response = await axios.delete(`${API_BASE_URL}/roles/bulk`, {
-    //             headers: {
-    //                 'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-    //             },
-    //             data: ids,
+  // Assign permissions to a role
+  // Assign permissions to a role
+  async assignPermissions(roleId: any, permissions: any) {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        throw new Error("Authentication token not found. Please log in again.");
+      }
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}${apiEndPoints.getRolePermissions(roleId)} `,
+        permissions,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+     }
+  },
 
-    //         });
-    //         return response.data;
-    //     } catch (error) {
-    //         throw this.handleError(error);
-    //     }
-    // },
+  // Sync permissions (replace all existing permissions)
+  async syncPermissions(roleId: any, permissions: any) {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        throw new Error("Authentication token not found. Please log in again.");
+      }
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL}${apiEndPoints.getRolePermissions(roleId)} `,
+        permissions,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+     }
+  },
 
-    // // Search roles
-    // async search(params = {}) {
-    //     try {
-    //         const response = await axios.get(`${API_BASE_URL}/roles/search`, {
-    //             headers: {
-    //                 'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-    //             },
-    //             params: {
-    //                 q: params.query || '',
-    //                 page: params.page || 1,
-    //                 per_page: params.perPage || 15
-    //             }
-    //         });
-    //         return response.data;
-    //     } catch (error) {
-    //         throw error.response?.data?.message || 'Search failed';
-    //     }
-    // },
-
-    // // Handle API errors
-    // handleError(error) {
-    //     if (error.response) {
-    //         // The request was made and the server responded with a status code
-    //         const message = error.response.data?.message || error.response.statusText;
-    //         return new Error(message || 'Role operation failed');
-    //     } else if (error.request) {
-    //         // The request was made but no response was received
-    //         return new Error('No response from server. Please check your connection.');
-    //     } else {
-    //         // Something happened in setting up the request
-    //         return new Error(error.message || 'Error configuring user request');
-    //     }
-    // }
-};
+  // Delete a role
+  async delete(id: any) {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_URL}${apiEndPoints.deleteRole(id)} `, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+     }
+  },
+ }
 
 export default useRoleStore;

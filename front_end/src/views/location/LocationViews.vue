@@ -174,6 +174,7 @@ export default {
         this.loading = false;
       }
     },
+
     editLocation(location) {
       this.isUpdate = true;
       this.editId = location.id;
@@ -188,8 +189,8 @@ export default {
         this.loading = true;
         const response = await useLocationStore.update(this.editId, this.form);
 
-        this.showPanel = false;
         this.fetchLocation(); // Refresh the list
+        this.showPanel = false;
         this.resetForm();
         this.isUpdate = false;
         this.editId = null;
@@ -290,8 +291,8 @@ export default {
                 isEdit: true,
                 isDelete: true,
                 isShow: false,
-                onEdit: () => this.editLocation(location), // match method from parent
-                onDelete: () => this.confirmDelete(location), // match method from parent
+                onEdit: () => this.editLocation(location),
+                onDelete: () => this.confirmDelete(location),
               }),
             ]);
           },

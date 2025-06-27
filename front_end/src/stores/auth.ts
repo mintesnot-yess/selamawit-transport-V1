@@ -2,8 +2,7 @@ import api from "@/api.ts";
 import apiEndPoints from "@/components/constants";
 import { useProfileStore } from "./profile";
 import { AUTH_TOKEN_KEY } from "@/key";
-// import { useProfileStore } from "@/stores/profile";
-
+ 
 export default {
   
   async login(credentials: any) {
@@ -29,9 +28,10 @@ export default {
     }
 
     try {
-      const response = await api.get(apiEndPoints.user);
+
+       const response = await api.get(apiEndPoints.user);
       
-      localStorage.setItem('user', JSON.stringify(response.data))
+      // localStorage.setItem('user', JSON.stringify(response.data))
       const profile = useProfileStore();
         
       profile.$patch({
@@ -45,7 +45,7 @@ export default {
     } catch (error) {
       console.error("Fetch user error:", error);
       // Optionally dispatch logout
-      // useAuthStore().logout();
+       this.logout();
       throw error;
     }
   },

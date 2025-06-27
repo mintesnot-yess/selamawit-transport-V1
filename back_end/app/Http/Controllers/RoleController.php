@@ -2,6 +2,8 @@
 
 
 namespace App\Http\Controllers;
+
+use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use Dotenv\Exception\ValidationException;
@@ -24,10 +26,12 @@ class RoleController extends Controller
         $roles = Role::with('permissions')->get();
         $perPage = request()->input('per_page', 15);
         $roles = Role::with('permissions')->paginate($perPage);
+        $permission = Permission::all();
 
         return response()->json([
             'success' => true,
             'data' => $roles->items(),
+            'permissions' => $permission,
             'meta' => [
                 'current_page' => $roles->currentPage(),
                 'per_page' => $roles->perPage(),

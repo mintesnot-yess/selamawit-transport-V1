@@ -17,31 +17,36 @@ export const useProfileStore = defineStore('profile', {
         token: localStorage.getItem(ACCESS_TOKEN_KEY),
     }),
 
-    actions: {
-        async fetchProfile() {
-            const token = localStorage.getItem(AUTH_TOKEN_KEY);
-            if (!token) {
-              throw new Error("Authentication required.");
-            }
+    // actions: {
+    //     async fetchProfile() {
+    //         const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    //         if (!token) {
+    //           throw new Error("Authentication required.");
+    //         }
         
-            try {
-              const response = await api.get(apiEndPoints.user);
-              const profile = useProfileStore();
+    //         try {
+    //           const response = await api.get(apiEndPoints.user);
+    //           const profile = useProfileStore();
 
-              profile.$patch({
-                user: response.data.user,
-                permissions: response.data.permissions,
-                token:token
-              });
+    //           profile.$patch({
+    //             user: response.data.user,
+    //             permissions: response.data.permissions,
+    //             token:token
+    //           });
         
-              return response.data;
-            } catch (error) {
-              console.error("Fetch user error:", error);
-              // Optionally dispatch logout
-              // useAuthStore().logout();
-              throw error;
-            }
-          }
-    }
-    
+    //           return response.data;
+    //         } catch (error) {
+    //           console.error("Fetch user error:", error);
+    //           // Optionally dispatch logout
+    //           // useAuthStore().logout();
+    //           throw error;
+    //         }
+    //       }
+    // }
+    getters: {
+      hasPermission: (state) => (permission: string) => {
+        return state.permissions.includes(permission);
+      },
+    },
+    persist: true,
 })
