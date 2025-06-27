@@ -18,6 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { usePermissions } from "@/hooks/usePermissions";
 
 // Define props
 defineProps<{
@@ -25,6 +26,7 @@ defineProps<{
     name: string;
     url: string;
     icon: LucideIcon;
+    permission: string;
   }[];
   items: {
     title: string;
@@ -40,18 +42,23 @@ defineProps<{
     name: string;
     url: string;
     icon: LucideIcon;
+    permission: string;
   }[];
   general: {
     name: string;
     url: string;
     icon: LucideIcon;
+    permission: string;
   }[];
   systemUser: {
     name: string;
     url: string;
     icon: LucideIcon;
+    permission: string;
   }[];
 }>();
+
+const { hasPermission, hasAnyPermission } = usePermissions(); // ✅ Safe: called inside setup()
 </script>
 
 <template>
@@ -69,20 +76,22 @@ defineProps<{
     </SidebarMenu>
 
     <!-- Orders -->
-    <SidebarMenu>
+    <SidebarMenu v-if="hasAnyPermission(['view-order'])">
       <SidebarGroupLabel>Orders</SidebarGroupLabel>
       <SidebarMenuItem v-for="item in order" :key="item.name">
-        <SidebarMenuButton :tooltip="item.name" as-child>
-          <router-link :to="item.url">
-            <component :is="item.icon" />
-            <span>{{ item.name }}</span>
-          </router-link>
-        </SidebarMenuButton>
+        <template v-if="hasPermission(item.permission)">
+          <SidebarMenuButton :tooltip="item.name" as-child>
+            <router-link :to="item.url">
+              <component :is="item.icon" />
+              <span>{{ item.name }}</span>
+            </router-link>
+          </SidebarMenuButton>
+        </template>
       </SidebarMenuItem>
     </SidebarMenu>
 
     <!-- Report (Collapsible) -->
-    <SidebarMenu>
+    <SidebarMenu v-if="hasPermission('view-report')">
       <SidebarGroupLabel>Report</SidebarGroupLabel>
       <Collapsible
         v-for="item in items"
@@ -121,29 +130,40 @@ defineProps<{
     </SidebarMenu>
 
     <!-- General Settings -->
-    <SidebarMenu>
+    <SidebarMenu
+      v-if="
+        hasAnyPermission(['view-expense-type', 'view-employee', 'load-type'])
+      "
+    >
       <SidebarGroupLabel>Settings</SidebarGroupLabel>
       <SidebarMenuItem v-for="item in general" :key="item.name">
-        <SidebarMenuButton :tooltip="item.name" as-child>
-          <router-link :to="item.url">
-            <component :is="item.icon" />
-            <span>{{ item.name }}</span>
-          </router-link>
-        </SidebarMenuButton>
+        <template v-if="hasPermission(item.permission)">
+          <SidebarMenuButton :tooltip="item.name" as-child>
+            <router-link :to="item.url">
+              <component :is="item.icon" />
+              <span>{{ item.name }}</span>
+            </router-link>
+          </SidebarMenuButton>
+        </template>
       </SidebarMenuItem>
     </SidebarMenu>
 
     <!-- User Management -->
-    <SidebarMenu>
+    <SidebarMenu
+      v-if="hasAnyPermission(['view-client', 'view-system-user', 'view-role'])"
+    >
       <SidebarGroupLabel>User Management</SidebarGroupLabel>
       <SidebarMenuItem v-for="item in systemUser" :key="item.name">
-        <SidebarMenuButton :tooltip="item.name" as-child>
-          <router-link :to="item.url">
-            <component :is="item.icon" />
-            <span>{{ item.name }}</span>
-          </router-link>
-        </SidebarMenuButton>
+        <template v-if="hasPermission(item.permission)">
+          <SidebarMenuButton :tooltip="item.name" as-child>
+            <router-link :to="item.url">
+              <component :is="item.icon" />
+              <span>{{ item.name }}</span>
+            </router-link>
+          </SidebarMenuButton>
+        </template>
       </SidebarMenuItem>
     </SidebarMenu>
   </SidebarGroup>
 </template>
+ 

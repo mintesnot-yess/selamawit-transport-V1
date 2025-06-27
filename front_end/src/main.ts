@@ -1,12 +1,14 @@
-import { createApp } from "vue";
+ 
+import { createApp } from 'vue'
+import App from './App.vue'
 import "./assets/style.css";
-import App from "./App.vue";
 
- import router from './router/index'
+import router from './router/index'
 import { createPinia } from 'pinia'
- import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import { useProfileStore } from './stores/profile'
-
+// import './assets/main.css'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import { useUserStore } from './hooks/useUser'
+ 
 const pinia = createPinia()
 
 pinia.use(piniaPluginPersistedstate)
@@ -16,6 +18,7 @@ const app = createApp(App)
 app.use(router)
 app.use(pinia)
 
-// const userStore = useProfileStore()
-     app.mount('#app')
- 
+const userStore = useUserStore()
+userStore.fetchUser().then(() => {
+    app.mount('#app')
+})
