@@ -28,7 +28,6 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  ScrollArea,
 } from "@/components/ui";
 
 // Props definition with default values

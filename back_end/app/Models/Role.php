@@ -6,15 +6,7 @@ use Laratrust\Models\Role as RoleModel;
 
 class Role extends RoleModel
 {
-
-    // public $guarded = [
-    //     'id',
-    //     'created_at',
-    //     'updated_at',
-    //     'created_by',
-    //     'updated_by'
-
-    // ];
+    public $guarded = [];
     protected $fillable = [
         'name',
         'display_name',
@@ -28,7 +20,4 @@ class Role extends RoleModel
         return $this->belongsToMany(User::class);
 
     }
-
-
-
 }

@@ -5,7 +5,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Roles Section -->
         <div
-          class="lg:col-span-1 h-fit md:sticky top-20 bg-white rounded-xl shadow-sm border border-surface-200"
+          class="lg:col-span-1 h-fit md:sticky top-0 bg-white rounded-xl shadow-sm border border-surface-200"
         >
           <div class="px-6 py-4 border-b border-surface-200">
             <div

@@ -60,8 +60,8 @@ class RoleController extends Controller
         $role = Role::create([
             "name" => $request->name,
             "display_name" => ucfirst($request->name),
-            "created_by" => Auth::id(),
-            "updated_by" => Auth::id()
+            // "created_by" => Auth::id(),
+            // "updated_by" => Auth::id()
         ]);
         log_action('Created ' . class_basename($role) . ' #' . $role->id);
 
@@ -204,7 +204,7 @@ class RoleController extends Controller
      * Remove the specified resource from storage.
      */
 
-    //  create search function 
+    //  create search function
     public function search(Request $request)
     {
         $query = $request->input('q', '');
