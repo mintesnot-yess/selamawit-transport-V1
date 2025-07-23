@@ -98,7 +98,7 @@ const data = {
             name: "Vehicle",
             url: "/vehicles",
             icon: Truck,
-            permission: "view-vehicles",
+            permission: "view-vehicle",
         },
         {
             name: "Employees",

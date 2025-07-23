@@ -15,7 +15,7 @@ class BankAccountController extends Controller
     // fetch all bank accounts
     // for a specific bank by bank id
 
-    public function index(Request $request, $id)
+    public function show(Request $request, $id)
     {
         $bankAccounts = BankAccount::with("bank:id,name")
             ->where("bank_id", $id)
@@ -58,8 +58,8 @@ class BankAccountController extends Controller
         ]);
 
         $bankAccount = BankAccount::create([
-            "account_number" => $request->account_number,
-            "bank_id" => $request->bank_id,
+            "account_number" => $request->input("account_number"),
+            "bank_id" => $request->input("bank_id"),
             "created_by" => Auth::id(),
             "updated_by" => Auth::id(),
         ]);
@@ -67,7 +67,7 @@ class BankAccountController extends Controller
         // log_action
 
         log_action(
-            "Created " . class_basename($bankAccount) . " #" . $bankAccount->id
+            "Created " . class_basename($bankAccount) . " #" . $bankAccount->id,
         );
 
         return response()->json(
@@ -75,7 +75,7 @@ class BankAccountController extends Controller
                 "message" => "Bank account created successfully",
                 "bank_account" => $bankAccount,
             ],
-            201
+            201,
         );
     }
 
@@ -89,13 +89,13 @@ class BankAccountController extends Controller
                 [
                     "message" => "Bank account not found",
                 ],
-                404
+                404,
             );
         }
 
         $bankAccount->delete();
         log_action(
-            "Deleted " . class_basename($bankAccount) . " #" . $bankAccount->id
+            "Deleted " . class_basename($bankAccount) . " #" . $bankAccount->id,
         );
         return response()->json([
             "message" => "Bank account deleted successfully",
@@ -115,7 +115,7 @@ class BankAccountController extends Controller
                 [
                     "errors" => $validator->errors(),
                 ],
-                422
+                422,
             );
         }
 
@@ -126,7 +126,7 @@ class BankAccountController extends Controller
                 [
                     "message" => "Bank account not found",
                 ],
-                404
+                404,
             );
         }
 
@@ -136,7 +136,7 @@ class BankAccountController extends Controller
             "updated_by" => Auth::id(),
         ]);
         log_action(
-            "Updated " . class_basename($bankAccount) . " #" . $bankAccount->id
+            "Updated " . class_basename($bankAccount) . " #" . $bankAccount->id,
         );
 
         return response()->json(
@@ -144,7 +144,7 @@ class BankAccountController extends Controller
                 "message" => "Bank account updated successfully",
                 "bank_account" => $bankAccount,
             ],
-            200
+            200,
         );
     }
 
@@ -156,7 +156,7 @@ class BankAccountController extends Controller
             $query->where(
                 "account_number",
                 "like",
-                "%" . $request->account_number . "%"
+                "%" . $request->account_number . "%",
             );
         }
 

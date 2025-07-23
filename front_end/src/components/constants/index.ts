@@ -1,7 +1,9 @@
- const apiEndPoints = {
+const apiEndPoints = {
   login: "/login",
   logout: "/logout",
   me: "/user",
+
+  dashboard: "/dashboard",
 
   // Users
   users: "/users",

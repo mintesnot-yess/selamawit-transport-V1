@@ -28,17 +28,17 @@ class ExpenseController extends Controller
                 "fromBank",
                 "toBank",
                 "fromAccount",
-            ]
+            ],
         );
 
         $CategoryEmployee = ExpenseType::where("category", "Employee")->get();
         $CategoryVehicle = ExpenseType::where("category", "Vehicle")->get();
         $CategoryGeneral = ExpenseType::where("category", "General")->get();
-        $totalAmount = Expense::sum("amount");
-
         $employees = Employee::all();
         $Vehicles = Vehicle::all();
         $Banks = Bank::all();
+
+        $totalAmount = Expense::sum("amount");
         $BanksAccount = BankAccount::all();
         $expenses = $query->paginate($perPage);
         $year = now()->year;
@@ -59,7 +59,7 @@ class ExpenseController extends Controller
         $monthNumbers = range(1, 12);
         $monthLabels = array_map(
             fn($m) => \Carbon\Carbon::create()->month($m)->format("M"),
-            $monthNumbers
+            $monthNumbers,
         );
 
         $income = [];
@@ -165,7 +165,7 @@ class ExpenseController extends Controller
                 "data" => $expense,
                 "message" => "Expense  created successfully.",
             ],
-            201
+            201,
         );
     }
 
@@ -176,7 +176,7 @@ class ExpenseController extends Controller
         if (!$expense) {
             return response()->json(
                 ["success" => false, "message" => "Expense not found."],
-                404
+                404,
             );
         }
 
@@ -199,28 +199,26 @@ class ExpenseController extends Controller
             "file" => "nullable|max:2048",
         ]);
 
-
-
-
         // Set expense_type_id based on which category is provided
         $validated["expense_type_id"] =
             $request->General_category ??
-            ($request->employees_category ?? $request->vehicle_category ?? $request->expense_types);
+            ($request->employees_category ??
+                ($request->vehicle_category ?? $request->expense_types));
 
         // Set from_bank and to_bank fields, retain existing if not provided
         $validated["from_bank"] =
             $request->has("selectedBank") && $request->selectedBank !== null
-            ? $request->selectedBank
-            : $expense->from_bank;
+                ? $request->selectedBank
+                : $expense->from_bank;
         $validated["from_account"] =
             $request->has("selectedAccount") &&
             $request->selectedAccount !== null
-            ? $request->selectedAccount
-            : $expense->from_account;
+                ? $request->selectedAccount
+                : $expense->from_account;
         $validated["to_bank"] =
             $request->has("toBank") && $request->toBank !== null
-            ? $request->toBank
-            : $expense->to_bank;
+                ? $request->toBank
+                : $expense->to_bank;
 
         // Handle file upload if present
         if ($request->hasFile("file")) {
@@ -230,7 +228,6 @@ class ExpenseController extends Controller
         }
 
         $validated["updated_by"] = Auth::id();
-
 
         $expense->update($validated);
 
@@ -244,7 +241,7 @@ class ExpenseController extends Controller
         if (!$expense) {
             return response()->json(
                 ["success" => false, "message" => "Expense not found."],
-                404
+                404,
             );
         }
 
@@ -273,7 +270,7 @@ class ExpenseController extends Controller
             if ($request->has("expense_type_id")) {
                 $query->where(
                     "expense_type_id",
-                    $request->input("expense_type_id")
+                    $request->input("expense_type_id"),
                 );
             }
             if ($request->has("vehicle_id")) {
@@ -306,7 +303,7 @@ class ExpenseController extends Controller
                     "message" => "Search failed",
                     "error" => $e->getMessage(),
                 ],
-                500
+                500,
             );
         }
     }

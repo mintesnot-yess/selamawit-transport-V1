@@ -13,61 +13,47 @@ use App\Http\Controllers\API\LocationController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\IncomeController;
 use App\Http\Controllers\API\LogController;
+use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 
 // Public routes
 Route::post("/login", [AuthController::class, "login"]);
 Route::post("/register", [AuthController::class, "register"]);
 
 Route::middleware("auth:sanctum")->group(function () {
-
-
+    Route::get("dashboard", [DashboardController::class, "index"]);
 
     Route::get("/users", [AuthController::class, "index"]);
-    Route::delete('/users/bulk', [AuthController::class, 'bulkDelete']);
+    Route::delete("/users/bulk", [AuthController::class, "bulkDelete"]);
 
     Route::delete("/user", [AuthController::class, "destroy"]);
     Route::put("/users/{id}", [AuthController::class, "update"]);
     // delete
     Route::delete("/users/{id}", [AuthController::class, "destroy"]);
 
-
-    Route::get('/user', function (Request $request) {
+    Route::get("/user", function (Request $request) {
         $user = $request->user();
-        $user->load('roles');
-        $permissions = $user->allPermissions()->pluck('name')->toArray();
+        $user->load("roles");
+        $permissions = $user->allPermissions()->pluck("name")->toArray();
         return response()->json([
-            'user' => $user,
-            'roles' => $user->roles->pluck('name'),
-            'permissions' => $permissions,
+            "user" => $user,
+            "roles" => $user->roles->pluck("name"),
+            "permissions" => $permissions,
         ]);
     });
 
     Route::post("/logout", [AuthController::class, "logout"]);
 
     // Bank routes
-    Route::prefix("banks")->group(function () {
-        Route::get("/", [BankController::class, "index"]);
-        Route::post("/", [BankController::class, "store"]);
-        Route::get("/search", [BankController::class, "search"]);
-        Route::delete("/{id}", [BankController::class, "destroy"]);
-        Route::put("/{id}", [BankController::class, "update"]);
-        // Add other bank routes as needed
-    });
 
-    // Bank Accounts routes
-    Route::prefix("bank-accounts")->group(function () {
-        Route::get("/{bankId}", [BankAccountController::class, "index"]);
-        Route::post("/", [BankAccountController::class, "store"]);
-        Route::get("/search/{id}", [BankAccountController::class, "search"]);
-        Route::delete("/{id}", [BankAccountController::class, "destroy"]);
-        Route::put("/{id}", [BankAccountController::class, "update"]);
-        // Add other bank account routes as needed
-    });
+    Route::resource("banks", BankController::class);
+    Route::resource("bank-accounts", BankAccountController::class);
+
+    // Route::resource("vehicles", VehicleController::class);
 
     // Vehicle routes
     Route::prefix("vehicles")->group(function () {
@@ -147,7 +133,7 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::get("/{id}", [OrderController::class, "show"]);
         Route::put("/{id}", [OrderController::class, "update"]);
         Route::delete("/{id}", [OrderController::class, "destroy"]);
-    });  // Income routes
+    }); // Income routes
 
     Route::prefix("incomes")->group(function () {
         Route::get("/", [IncomeController::class, "index"]);
